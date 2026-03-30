@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS students_to_classes (
 );
 
 CREATE TABLE IF NOT EXISTS assignments (
-    assignmentID INT PRIMARY KEY AUTO_INCREMENT,
-    type VARCHAR(7) NOT NULL, --exam, homework, quiz, project
+    assignmentID SERIAL PRIMARY KEY,
+    type VARCHAR(10) NOT NULL, -- Increased to fit 'homework' (8 chars)
     name VARCHAR(50) NOT NULL,
     due DATE NOT NULL,
     classID VARCHAR(20),
