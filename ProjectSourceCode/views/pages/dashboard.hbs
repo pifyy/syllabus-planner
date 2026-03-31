@@ -1,0 +1,68 @@
+<div class="content-layer">
+  <div class="dashboard-layout">
+    <!-- sample calendar layout with random events HARDCODED --> 
+    <div class="dash-cal-panel">
+      <div class="dash-panel-label">Monthly View</div>
+      <div class="dash-cal-card">
+        <div class="dash-cal-header">
+          <button class="dash-cal-nav" id="prevMonth">&#8249;</button>
+          <span class="dash-cal-title" id="calMonthTitle"></span>
+          <button class="dash-cal-nav" id="nextMonth">&#8250;</button>
+        </div>
+        <div class="dash-cal-weekdays">
+          <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+        </div>
+        <div class="dash-cal-days" id="dashCalDays"></div>
+      </div>
+    </div>
+    <div class="dash-timeline-panel">
+      <div class="dash-panel-label">Week at a Glance</div>
+      <div class="dash-week-strip" id="dashWeekStrip"></div>
+      <div class="preview-card">
+        <div class="preview-topbar">
+          <div class="dot r"></div>
+          <div class="dot y"></div>
+          <div class="dot g"></div>
+          <span class="preview-topbar-label">Daily Timeline</span>
+        </div>
+        <!-- will update to be responsive -->
+        <div class="preview-body">
+          <div class="preview-row">
+            <div class="preview-dot red"></div>
+            <div class="preview-text">
+              <span>Midterm Exam - Quantum Physics</span>
+              <small>Oct 14, 2026 · 9:00 AM</small>
+            </div>
+            <div class="preview-tag exam">Exam</div>
+          </div>
+          <div class="preview-row">
+            <div class="preview-dot blue"></div>
+            <div class="preview-text">
+              <span>Essay Draft - Modern Philosophy</span>
+              <small>Oct 16, 2026 · 11:59 PM</small>
+            </div>
+            <div class="preview-tag assign">Assignment</div>
+          </div>
+          <div class="preview-row">
+            <div class="preview-dot gold"></div>
+            <div class="preview-text">
+              <span>Quiz 4 - Linear Algebra</span>
+              <small>Oct 18, 2026 · 2:00 PM</small>
+            </div>
+            <div class="preview-tag quiz">Quiz</div>
+          </div>
+          <div class="preview-row">
+            <div class="preview-dot terra"></div>
+            <div class="preview-text">
+              <span>Group Project Checkpoint - Software Development</span>
+              <small>Oct 21, 2026 · 5:00 PM</small>
+            </div>
+            <div class="preview-tag proj">Project</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script src="/assets/js/calendar.js"></script>

@@ -51,6 +51,7 @@ app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
+app.use('/assets', express.static(path.join(__dirname, 'assets'))); // specify the usage of static files in the assets folder
 
 // initialize session variables
 app.use(
@@ -66,6 +67,24 @@ app.use(
     extended: true,
   })
 );
+
+//Endpoints 
+
+app.get('/', (req, res) => {
+  res.render('./pages/index');
+});
+
+app.get('/register', (req, res) => {
+  res.render('./pages/register');
+});
+
+app.get('/login', (req, res) => {
+  res.render('./pages/login');
+});
+
+app.get('/dashboard', (req, res) => {
+  res.render('./pages/dashboard');
+});
 
 app.listen(3000);
 console.log('Server is listening on port 3000');
