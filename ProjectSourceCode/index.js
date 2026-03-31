@@ -86,5 +86,9 @@ app.get('/dashboard', (req, res) => {
   res.render('./pages/dashboard');
 });
 
+app.get('/syllabi', (req, res) => {
+  res.render('./pages/syllabi');
+});
+
 app.listen(3000);
 console.log('Server is listening on port 3000');
