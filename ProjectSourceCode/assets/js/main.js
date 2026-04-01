@@ -1,4 +1,13 @@
 //JS elements for the pages
+
+// ── Navbar scroll effect ──
+const navbar = document.getElementById('navbar');
+if (navbar) {
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 20);
+  });
+}
+
 const _fadeObserver = new IntersectionObserver((entries) => {
 entries.forEach(entry => {
     if (entry.isIntersecting) {
