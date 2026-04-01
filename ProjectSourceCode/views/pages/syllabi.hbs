@@ -1,0 +1,210 @@
+<div class="content-layer">
+  <div class="syllabi-layout">
+
+    <!-- ── Left: Upload Panel ── -->
+    <div class="syllabi-upload-panel">
+      <div class="dash-panel-label">Upload Syllabi</div>
+
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <path d="M20 26V14M20 14L14 20M20 14L26 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 28a8 8 0 01-2-15.3A10 10 0 0128.3 14 6 6 0 0132 26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="upload-title">Drop your syllabus here</h3>
+        <p class="upload-sub">PDF, DOCX, or image - we handle the rest</p>
+        <label class="btn-primary-custom upload-btn" for="fileInput">
+          Browse Files
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </label>
+        <input type="file" id="fileInput" accept=".pdf,.docx,.png,.jpg,.jpeg" style="display:none">
+        <p class="upload-hint">Supports PDF · DOCX · PNG · JPG</p>
+      </div>
+
+      <div class="upload-processing" id="uploadProcessing">
+        <div class="processing-bar"><div class="processing-fill" id="processingFill"></div></div>
+        <span class="processing-label" id="processingLabel">Reading file…</span>
+      </div>
+
+      <div class="upload-success" id="uploadSuccess">
+        <div class="success-icon">✓</div>
+        <span>Syllabus added!</span>
+      </div>
+
+      <div class="upload-file-list" id="uploadFileList"></div>
+    </div>
+
+    <div class="syllabi-view-panel">
+      <div class="dash-panel-label">Your Syllabi</div>
+
+      <div class="syllabi-tabs">
+        <div class="tab-bar" id="tabBar">
+          <button class="tab-btn active" data-tab="physics">Quantum Physics</button>
+          <button class="tab-btn" data-tab="philosophy">Modern Philosophy</button>
+          <button class="tab-btn" data-tab="algebra">Linear Algebra</button>
+          <button class="tab-btn" data-tab="dataviz">Data Visualization</button>
+        </div>
+
+        <div class="tab-panels">
+
+          <div class="tab-panel active" id="tab-physics">
+            <div class="syllabus-header">
+              <div>
+                <h2 class="syllabus-title">Quantum Physics</h2>
+                <p class="syllabus-code">PHYS 3410 · Fall 2026</p>
+              </div>
+              <div class="preview-tag exam">4 Exams</div>
+            </div>
+            <div class="syllabus-meta">
+              <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Dr. Elena Vasquez</span></div>
+              <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">MWF 9:00 – 9:50 AM</span></div>
+              <div class="meta-item"><span class="meta-label">Room</span><span class="meta-value">Duane Physics G1B30</span></div>
+            </div>
+            <div class="event-list-label">Upcoming Deadlines</div>
+            <div class="preview-card">
+              <div class="preview-body">
+                <div class="preview-row">
+                  <div class="preview-dot red"></div>
+                  <div class="preview-text"><span>Midterm Exam — Chapters 1–5</span><small>Oct 14, 2026 · 9:00 AM</small></div>
+                  <div class="preview-tag exam">Exam</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot blue"></div>
+                  <div class="preview-text"><span>Problem Set 4</span><small>Oct 20, 2026 · 11:59 PM</small></div>
+                  <div class="preview-tag assign">Assignment</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot gold"></div>
+                  <div class="preview-text"><span>Lab Report — Wave Functions</span><small>Oct 28, 2026 · 5:00 PM</small></div>
+                  <div class="preview-tag quiz">Lab</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot red"></div>
+                  <div class="preview-text"><span>Final Exam</span><small>Dec 16, 2026 · 7:30 AM</small></div>
+                  <div class="preview-tag exam">Exam</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="tab-philosophy">
+            <div class="syllabus-header">
+              <div>
+                <h2 class="syllabus-title">Modern Philosophy</h2>
+                <p class="syllabus-code">PHIL 2600 · Fall 2026</p>
+              </div>
+              <div class="preview-tag assign">3 Essays</div>
+            </div>
+            <div class="syllabus-meta">
+              <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Prof. James Hartwell</span></div>
+              <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">TR 11:00 AM – 12:15 PM</span></div>
+              <div class="meta-item"><span class="meta-label">Room</span><span class="meta-value">Hellems 141</span></div>
+            </div>
+            <div class="event-list-label">Upcoming Deadlines</div>
+            <div class="preview-card">
+              <div class="preview-body">
+                <div class="preview-row">
+                  <div class="preview-dot blue"></div>
+                  <div class="preview-text"><span>Essay Draft — Descartes & Doubt</span><small>Oct 16, 2026 · 11:59 PM</small></div>
+                  <div class="preview-tag assign">Assignment</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot gold"></div>
+                  <div class="preview-text"><span>Reading Response — Kant</span><small>Oct 22, 2026 · 11:59 PM</small></div>
+                  <div class="preview-tag quiz">Reading</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot blue"></div>
+                  <div class="preview-text"><span>Final Essay — Hegel's Dialectic</span><small>Dec 10, 2026 · 11:59 PM</small></div>
+                  <div class="preview-tag assign">Assignment</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="tab-algebra">
+            <div class="syllabus-header">
+              <div>
+                <h2 class="syllabus-title">Linear Algebra</h2>
+                <p class="syllabus-code">MATH 2130 · Fall 2026</p>
+              </div>
+              <div class="preview-tag quiz">6 Quizzes</div>
+            </div>
+            <div class="syllabus-meta">
+              <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Dr. Priya Nair</span></div>
+              <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">MWF 2:00 – 2:50 PM</span></div>
+              <div class="meta-item"><span class="meta-label">Room</span><span class="meta-value">ECCR 150</span></div>
+            </div>
+            <div class="event-list-label">Upcoming Deadlines</div>
+            <div class="preview-card">
+              <div class="preview-body">
+                <div class="preview-row">
+                  <div class="preview-dot gold"></div>
+                  <div class="preview-text"><span>Quiz 4 — Eigenvalues</span><small>Oct 18, 2026 · 2:00 PM</small></div>
+                  <div class="preview-tag quiz">Quiz</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot blue"></div>
+                  <div class="preview-text"><span>Homework 7 — Vector Spaces</span><small>Oct 24, 2026 · 11:59 PM</small></div>
+                  <div class="preview-tag assign">Assignment</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot gold"></div>
+                  <div class="preview-text"><span>Quiz 5 — Linear Transformations</span><small>Nov 1, 2026 · 2:00 PM</small></div>
+                  <div class="preview-tag quiz">Quiz</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot red"></div>
+                  <div class="preview-text"><span>Midterm Exam</span><small>Nov 8, 2026 · 2:00 PM</small></div>
+                  <div class="preview-tag exam">Exam</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Visualization -->
+          <div class="tab-panel" id="tab-dataviz">
+            <div class="syllabus-header">
+              <div>
+                <h2 class="syllabus-title">Data Visualization</h2>
+                <p class="syllabus-code">INFO 4602 · Fall 2026</p>
+              </div>
+              <div class="preview-tag proj">3 Projects</div>
+            </div>
+            <div class="syllabus-meta">
+              <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Prof. Danielle Szafir</span></div>
+              <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">TR 2:00 – 3:15 PM</span></div>
+              <div class="meta-item"><span class="meta-label">Room</span><span class="meta-value">ATLAS 100</span></div>
+            </div>
+            <div class="event-list-label">Upcoming Deadlines</div>
+            <div class="preview-card">
+              <div class="preview-body">
+                <div class="preview-row">
+                  <div class="preview-dot terra"></div>
+                  <div class="preview-text"><span>Group Project Checkpoint</span><small>Oct 21, 2026 · 5:00 PM</small></div>
+                  <div class="preview-tag proj">Project</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot blue"></div>
+                  <div class="preview-text"><span>Design Critique Write-up</span><small>Oct 29, 2026 · 11:59 PM</small></div>
+                  <div class="preview-tag assign">Assignment</div>
+                </div>
+                <div class="preview-row">
+                  <div class="preview-dot terra"></div>
+                  <div class="preview-text"><span>Final Project — Interactive Dashboard</span><small>Dec 12, 2026 · 5:00 PM</small></div>
+                  <div class="preview-tag proj">Project</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script src="/assets/js/syllabi.js"></script>
