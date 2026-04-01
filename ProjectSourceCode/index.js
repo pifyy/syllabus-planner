@@ -66,28 +66,76 @@ app.use(
   bodyParser.urlencoded({
     extended: true,
   })
+
 );
 
 //Endpoints 
 
 app.get('/', (req, res) => {
-  res.render('./pages/index');
+  res.render('./pages/index', { user: req.session.user });
 });
 
 app.get('/register', (req, res) => {
-  res.render('./pages/register');
+  res.render('./pages/register', { user: req.session.user });
+});
+app.post('/register', async (req, res) => {
+  const username = req.body.username;
+  const email = req.body.email;
+  const password =  await bcrypt.hash(req.body.password, 10);
+
+  try {
+    //checking to see if user exists will add a banner later that displays this information instead of this ugly error. 
+    const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email]);
+    if (user) {
+      res.render('./pages/register', { error: 'Username or email already exists' });
+    } else {
+      await db.none('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, password]);
+      res.redirect('/login');
+    }
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.render('./pages/register', { error: 'An error occurred during registration. Please try again.' });
+  }
 });
 
 app.get('/login', (req, res) => {
-  res.render('./pages/login');
+  res.render('./pages/login', { user: req.session.user });
+});
+app.post('/login', async (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  try {
+    const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+    if (user && await bcrypt.compare(password, user.password)) {
+      req.session.user = user;
+      req.session.save();
+      res.redirect('/dashboard');
+    } else {
+      res.render('./pages/login', { error: 'Invalid username or password' });
+    }
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.render('./pages/login', { error: 'An error occurred during login. Please try again.' });
+  }
+});
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
+});
+const auth = (req, res, next) => {
+  if (!req.session.user) {
+    // Default to login page.
+    return res.redirect('/login');
+  }
+  next();
+};
+app.get('/dashboard', auth, (req, res) => {
+  res.render('./pages/dashboard', { user: req.session.user });
 });
 
-app.get('/dashboard', (req, res) => {
-  res.render('./pages/dashboard');
-});
-
-app.get('/syllabi', (req, res) => {
-  res.render('./pages/syllabi');
+app.get('/syllabi', auth, (req, res) => {
+  res.render('./pages/syllabi', { user: req.session.user });
 });
 
 app.listen(3000);
