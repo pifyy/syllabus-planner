@@ -33,6 +33,6 @@ CREATE TABLE IF NOT EXISTS assignments (
     type VARCHAR(10) NOT NULL, -- Increased to fit 'homework' (8 chars)
     name VARCHAR(50) NOT NULL,
     due DATE NOT NULL,
-    classID VARCHAR(20),
+    classID INT,
     FOREIGN KEY (classID) REFERENCES classes(classID)
 );

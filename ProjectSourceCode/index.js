@@ -79,23 +79,15 @@ app.get('/register', (req, res) => {
   res.render('./pages/register', { user: req.session.user });
 });
 app.post('/register', async (req, res) => {
-  const username = req.body.username;
-  const email = req.body.email;
-  const password =  await bcrypt.hash(req.body.password, 10);
-
-  try {
-    //checking to see if user exists will add a banner later that displays this information instead of this ugly error. 
-    const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email]);
-    if (user) {
-      res.render('./pages/register', { error: 'Username or email already exists' });
-    } else {
-      await db.none('INSERT INTO users (username, email, password) VALUES ($1, $2, $3)', [username, email, password]);
-      res.redirect('/login');
-    }
-  } catch (error) {
-    console.error('Error during registration:', error);
-    res.render('./pages/register', { error: 'An error occurred during registration. Please try again.' });
-  }
+  const hash = await bcrypt.hash(req.body.password, 10);
+  const query = 'INSERT INTO users(username, email, password) VALUES($1, $2, $3) RETURNING *;';
+  db.any(query, [req.body.username, req.body.email, hash])
+    .then(() => {
+      res.status(200).json({message: 'Success'});
+    })
+    .catch(() => {
+      res.status(400).json({message: 'Invalid input'});
+    });
 });
 
 app.get('/login', (req, res) => {
@@ -138,5 +130,13 @@ app.get('/syllabi', auth, (req, res) => {
   res.render('./pages/syllabi', { user: req.session.user });
 });
 
-app.listen(3000);
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
+});
+
+app.get('/test', (_req, res) => {
+  res.redirect('/login');
+});
+
+module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
