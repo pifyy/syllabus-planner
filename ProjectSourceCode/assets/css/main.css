@@ -1002,3 +1002,18 @@ body {
   .hero-inner { padding: 40px 24px; border-radius: 20px; }
   .cta-box    { padding: 40px 28px; }
 }
+
+.dropdown-menu {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border) !important;
+  color: var(--text-primary);
+}
+
+.dropdown-item {
+  color: var(--text-primary);
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-card-hover);
+  color: var(--terracotta-light);
+}

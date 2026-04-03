@@ -9,6 +9,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
 const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
+const { error } = require('console');
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -69,6 +70,13 @@ app.use(
 
 );
 
+const auth = (req, res, next) => {
+  if (!req.session.user) {
+    // Default to login page.
+    return res.redirect('/login');
+  }
+  next();
+};
 //Endpoints 
 
 app.get('/', (req, res) => {
@@ -78,13 +86,14 @@ app.get('/', (req, res) => {
 app.get('/register', (req, res) => {
   res.render('./pages/register', { user: req.session.user });
 });
+
 app.post('/register', async (req, res) => {
   const hash = await bcrypt.hash(req.body.password, 10);
   const query = 'INSERT INTO users(username, email, password) VALUES($1, $2, $3) RETURNING *;';
   db.any(query, [req.body.username, req.body.email, hash])
-    .then(() => {
-      res.status(200).json({message: 'Success'});
-    })
+.then(() => {
+  res.status(200).json({message: 'Success'});
+})
     .catch(() => {
       res.status(400).json({message: 'Invalid input'});
     });
@@ -93,6 +102,7 @@ app.post('/register', async (req, res) => {
 app.get('/login', (req, res) => {
   res.render('./pages/login', { user: req.session.user });
 });
+
 app.post('/login', async (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
@@ -115,13 +125,7 @@ app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/');
 });
-const auth = (req, res, next) => {
-  if (!req.session.user) {
-    // Default to login page.
-    return res.redirect('/login');
-  }
-  next();
-};
+
 app.get('/dashboard', auth, (req, res) => {
   res.render('./pages/dashboard', { user: req.session.user });
 });
@@ -134,9 +138,20 @@ app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
 
-app.get('/test', (_req, res) => {
+app.get('/test', (req, res) => {
   res.redirect('/login');
 });
+
+//API calls for debugging only. Specifcally for use in postman to easily see tables and info -Alexander
+app.get('/getUserTable', async (req, res) => {
+  try{
+    const out = await db.any('SELECT * FROM USERS');
+    res.status(200).json({Data: out});
+  } catch (err) {
+    res.status(400).json({Error: err.message})
+  }
+});                                                   
+
 
 module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
