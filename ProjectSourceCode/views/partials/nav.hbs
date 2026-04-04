@@ -14,30 +14,45 @@
             <li class="nav-item"><a class="nav-link" href="/dashboard">Calendar</a></li>
             </ul>
             <div class="dropdown me-lg-3">
-            <button class="btn btn-link text-dark position-relative p-0 border-0" type="button" id="notificationBell" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-bell fs-5"></i>
-                <!-- TODO: Render this line ONLY when there is upcomming assignment -->
-                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                <span class="visually-hidden">New notifications</span>
-                </span>
-            </button>
-            
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3" aria-labelledby="notificationBell" style="min-width: 300px;">
-                <li class="px-3 py-2 border-bottom">
-                <h6 class="mb-0 text-center">Notifications</h6>
-                </li>
-                <div class="notification-items" style="max-height: 300px; overflow-y: auto;">
-                <!-- TODO: ADD NOTIFICATION CODE HERE    -->
-                <li class="px-3 py-4 text-center">
-                    <p class="mb-0 small">No new notifications</p>
-                </li>
-                </div>
-                <li class="border-top">
-                <a class="dropdown-item text-center small text-primary py-2" href="/notifications">View all</a>
-                </li>
-            </ul>
+                <!-- REMINDER BUTTON AND DROP BOX (alex)-->
+                <button class="btn btn-link text-dark position-relative p-0 border-0" type="button" id="notificationBell" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-bell fs-5"></i>
+                    {{#if hasNotifications}}
+                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                        <span class="visually-hidden">New notifications</span>
+                    </span>
+                    {{/if}}
+                </button>
+
+                <!-- DROPDOWN after you click notifcations -->
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3" aria-labelledby="notificationBell" style="min-width: 300px;">
+                    <li class="px-3 py-2 border-bottom">
+                        <h6 class="mb-0 text-center">Notifications</h6>
+                    </li>
+                    
+                    <div class="notification-items" style="max-height: 300px; overflow-y: auto;">
+                        {{#if hasNotifications}}
+                            {{#each notifications}}
+                            <li class="px-3 py-2 border-bottom">
+                                <p class="mb-0 small"><strong>{{this.name}}</strong> ({{this.classname}})</p>
+                                <span class="text-muted extra-small">Due: {{this.formatted_due}}</span>
+                            </li>
+                            {{/each}}
+                        {{else}}
+                            <li class="px-3 py-4 text-center">
+                                <p class="mb-0 small text-muted">No upcoming assignments</p>
+                            </li>
+                        {{/if}}
+                    </div>
+
+                    <li class="border-top">
+                        <a class="dropdown-item text-center small text-primary py-2" href="/dashboard">View All</a>
+                    </li>
+                </ul>
             </div>
-            <a href="/settings" class="btn-nav">Account</a> 
+            </ul>
+        </div>
+    <a href="/settings" class="btn-nav">Account</a> 
     </div> 
     {{else}}
     <div class="container">

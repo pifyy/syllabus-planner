@@ -99,3 +99,8 @@ describe('Testing Render', () => {
       });
   });
 });
+
+//=======  EC UNIT TESTS
+
+
+//======= Non lab related unit tests
