@@ -32,10 +32,10 @@ describe('Server!', () => {
 // Positive Test Case:
 // API: /register
 // Input: {username: 'testuser1', password: 'testpassword'}
-// Expect: res.status == 200 and res.body.message == 'Success'
-// Result: This test case should pass and return a status 200 along with a "Success" message.
+// Expect: res.redirectTo(/login)
+// Result: This test case should pass and redirect the user to the login page.
 // Explanation: The testcase will call the /register API with a valid username and password
-// and expects the API to return a status of 200 along with the "Success" message.
+// and expects the API to redirct the user to the login page for thier first login.
 
 describe('Testing Register API', () => {
   it('Positive : /register - valid new user', done => {
@@ -44,8 +44,8 @@ describe('Testing Register API', () => {
       .post('/register')
       .send({username: 'testuser1', email: 'test1@test.com', password: 'testpassword'})
       .end((_err, res) => {
-        expect(res).to.have.status(200);
-        expect(res.body.message).to.equals('Success');
+        //test case changed to reflect being redirected on successful user creation.
+        expect(res).to.redirectTo(/\/login$/);
         done();
       });
   });
@@ -99,3 +99,8 @@ describe('Testing Render', () => {
       });
   });
 });
+
+//=======  EC UNIT TESTS
+
+
+//======= Non lab related unit tests
