@@ -7,3 +7,7 @@ Nathan and I met with Zach. We both shared our progress on the application and a
 
 Koran, Alexander, Pierce
 For the next lab we need to make significant progress and have something functional for testing for the lab.
+
+##Meeting week 4/6/2026
+Scribe: Alexander
+Release notes need to be created before end of the day and a link sent to Zach, since we are doing a pull commit for our branches as a group after class today. We are going to write documentation for our AI feature so we can create a basic version of the main feature by the end of the week. Zach also said he can help us with testing during this week's lab time if we need a tester.

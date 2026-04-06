@@ -9,6 +9,9 @@
             <p class="hero-subtitle">
                 Sign up to start uploading your syllabi and creating your unified timeline.
             </p>
+            {{#if error}}
+                <p class="text-danger">{{error}}</p>
+            {{/if}}
             <form class="register-form d-flex flex-column gap-3" action="/register" method="POST">
                 <input type="text" name="username" placeholder="Username" required class="form-control form-control-lg">
                 <input type="email" name="email" placeholder="Email" required class="form-control form-control-lg">

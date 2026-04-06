@@ -1,0 +1,94 @@
+<div class="content-layer">
+  <div class="dashboard-layout">
+
+    <div class="dash-cal-panel">
+      <div class="dash-panel-label">Your Classes</div>
+      <div class="oh-class-list" id="ohClassList">
+        <div class="oh-class-btn active" data-target="physics">Quantum Physics</div>
+        <div class="oh-class-btn" data-target="philosophy">Modern Philosophy</div>
+        <div class="oh-class-btn" data-target="algebra">Linear Algebra</div>
+        <div class="oh-class-btn" data-target="dataviz">Data Visualization</div>
+      </div>
+    </div>
+
+    <div class="dash-timeline-panel">
+      <div class="dash-panel-label">Office Hours</div>
+
+      <div class="oh-panel active" id="oh-physics">
+        <div class="syllabus-header">
+          <div>
+            <h2 class="syllabus-title">Quantum Physics</h2>
+            <p class="syllabus-code">PHYS 3410 · Fall 2026</p>
+          </div>
+        </div>
+        <div class="syllabus-meta">
+          <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Dr. Elena Vasquez</span></div>
+          <div class="meta-item"><span class="meta-label">Office Hours</span><span class="meta-value">T 3:00 – 4:30 PM (Zoom)</span></div>
+          <div class="meta-item"><span class="meta-label">Location</span><span class="meta-value">Duane Physics G1B30</span></div>
+          <div class="meta-item"><span class="meta-label">Email</span><span class="meta-value">elena.vasquez@university.edu</span></div>
+          <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">MWF 9:00 – 9:50 AM</span></div>
+        </div>
+      </div>
+
+      <div class="oh-panel" id="oh-philosophy">
+        <div class="syllabus-header">
+          <div>
+            <h2 class="syllabus-title">Modern Philosophy</h2>
+            <p class="syllabus-code">PHIL 2600 · Fall 2026</p>
+          </div>
+        </div>
+        <div class="syllabus-meta">
+          <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Prof. James Hartwell</span></div>
+          <div class="meta-item"><span class="meta-label">Office Hours</span><span class="meta-value">W 1:00 – 2:30 PM</span></div>
+          <div class="meta-item"><span class="meta-label">Location</span><span class="meta-value">Hellems 141</span></div>
+          <div class="meta-item"><span class="meta-label">Email</span><span class="meta-value">james.hartwell@university.edu</span></div>
+          <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">TR 11:00 AM – 12:15 PM</span></div>
+        </div>
+      </div>
+
+      <div class="oh-panel" id="oh-algebra">
+        <div class="syllabus-header">
+          <div>
+            <h2 class="syllabus-title">Linear Algebra</h2>
+            <p class="syllabus-code">MATH 2130 · Fall 2026</p>
+          </div>
+        </div>
+        <div class="syllabus-meta">
+          <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Dr. Priya Nair</span></div>
+          <div class="meta-item"><span class="meta-label">Office Hours</span><span class="meta-value">MF 3:00 – 4:00 PM</span></div>
+          <div class="meta-item"><span class="meta-label">Location</span><span class="meta-value">ECCR 150</span></div>
+          <div class="meta-item"><span class="meta-label">Email</span><span class="meta-value">priya.nair@university.edu</span></div>
+          <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">MWF 2:00 – 2:50 PM</span></div>
+        </div>
+      </div>
+
+      <div class="oh-panel" id="oh-dataviz">
+        <div class="syllabus-header">
+          <div>
+            <h2 class="syllabus-title">Data Visualization</h2>
+            <p class="syllabus-code">INFO 4602 · Fall 2026</p>
+          </div>
+        </div>
+        <div class="syllabus-meta">
+          <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Prof. Danielle Szafir</span></div>
+          <div class="meta-item"><span class="meta-label">Office Hours</span><span class="meta-value">T 10:00 – 11:30 AM</span></div>
+          <div class="meta-item"><span class="meta-label">Location</span><span class="meta-value">ATLAS 100</span></div>
+          <div class="meta-item"><span class="meta-label">Email</span><span class="meta-value">danielle.szafir@university.edu</span></div>
+          <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">TR 2:00 – 3:15 PM</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.oh-class-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.oh-class-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.oh-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('oh-' + btn.dataset.target).classList.add('active');
+    });
+  });
+</script>
