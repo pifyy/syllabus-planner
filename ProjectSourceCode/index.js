@@ -51,6 +51,7 @@ app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json()); // specify the usage of JSON for parsing request body.
+app.use('/assets', express.static(path.join(__dirname, 'assets'))); // specify the usage of static files in the assets folder
 
 // initialize session variables
 app.use(
@@ -65,11 +66,77 @@ app.use(
   bodyParser.urlencoded({
     extended: true,
   })
+
 );
 
-app.get('/', (req, res) =>{
-  res.render('home');
+//Endpoints 
+
+app.get('/', (req, res) => {
+  res.render('./pages/index', { user: req.session.user });
 });
 
-app.listen(3000);
+app.get('/register', (req, res) => {
+  res.render('./pages/register', { user: req.session.user });
+});
+app.post('/register', async (req, res) => {
+  const hash = await bcrypt.hash(req.body.password, 10);
+  const query = 'INSERT INTO users(username, email, password) VALUES($1, $2, $3) RETURNING *;';
+  db.any(query, [req.body.username, req.body.email, hash])
+    .then(() => {
+      res.status(200).json({message: 'Success'});
+    })
+    .catch(() => {
+      res.status(400).json({message: 'Invalid input'});
+    });
+});
+
+app.get('/login', (req, res) => {
+  res.render('./pages/login', { user: req.session.user });
+});
+app.post('/login', async (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  try {
+    const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+    if (user && await bcrypt.compare(password, user.password)) {
+      req.session.user = user;
+      req.session.save();
+      res.redirect('/dashboard');
+    } else {
+      res.render('./pages/login', { error: 'Invalid username or password' });
+    }
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.render('./pages/login', { error: 'An error occurred during login. Please try again.' });
+  }
+});
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
+});
+const auth = (req, res, next) => {
+  if (!req.session.user) {
+    // Default to login page.
+    return res.redirect('/login');
+  }
+  next();
+};
+app.get('/dashboard', auth, (req, res) => {
+  res.render('./pages/dashboard', { user: req.session.user });
+});
+
+app.get('/syllabi', auth, (req, res) => {
+  res.render('./pages/syllabi', { user: req.session.user });
+});
+
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
+});
+
+app.get('/test', (_req, res) => {
+  res.redirect('/login');
+});
+
+module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
