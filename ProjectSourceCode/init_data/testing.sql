@@ -2,7 +2,7 @@
 INSERT INTO users 
     (userID, username, email, password)
 VALUES
-    (1, '123', '123@gmail.com', '$2a$10$h4qCcDTonTsWSlGqGQIguO7ebMgKLW5uGPbf0XjaGpkMLXUN5.QZm');
+    (0, '123', '123@gmail.com', '$2a$10$h4qCcDTonTsWSlGqGQIguO7ebMgKLW5uGPbf0XjaGpkMLXUN5.QZm');
 --This is the login for a student with username password of 123, 123
 
 INSERT INTO classes
@@ -20,7 +20,7 @@ VALUES
 INSERT INTO students_to_classes 
     (classID,userID)
 VALUES
-    (1,1);
+    (1,0);
 
 INSERT INTO assignments
     (name, type, due, classID)

@@ -92,7 +92,7 @@ app.post('/register', async (req, res) => {
   const query = 'INSERT INTO users(username, email, password) VALUES($1, $2, $3) RETURNING *;';
   db.any(query, [req.body.username, req.body.email, hash])
     .then(() => {
-      res.status(200).json({message: 'Success'});
+      res.redirect('/login');
     })
     .catch(() => {
       res.status(400).json({message: 'Invalid input'});
