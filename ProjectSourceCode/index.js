@@ -130,6 +130,10 @@ app.get('/syllabi', auth, (req, res) => {
   res.render('./pages/syllabi', { user: req.session.user });
 });
 
+app.get('/officehours', auth, (req, res) => {
+  res.render('./pages/officehours', { user: req.session.user });
+});
+
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
