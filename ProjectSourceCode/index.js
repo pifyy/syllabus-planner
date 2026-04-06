@@ -79,15 +79,20 @@ app.get('/register', (req, res) => {
   res.render('./pages/register', { user: req.session.user });
 });
 app.post('/register', async (req, res) => {
-  const hash = await bcrypt.hash(req.body.password, 10);
-  const query = 'INSERT INTO users(username, email, password) VALUES($1, $2, $3) RETURNING *;';
-  db.any(query, [req.body.username, req.body.email, hash])
-    .then(() => {
-      res.status(200).json({message: 'Success'});
-    })
-    .catch(() => {
-      res.status(400).json({message: 'Invalid input'});
+  try {
+    const hash = await bcrypt.hash(req.body.password, 10);
+    const query = 'INSERT INTO users(username, email, password) VALUES($1, $2, $3) RETURNING *;';
+
+    await db.any(query, [req.body.username, req.body.email, hash]);
+
+    res.redirect('/login');
+  } catch (error) {
+    console.error('Error during registration: ', error);
+    res.render('./pages/register', {
+      error: 'Registration failed.',
+      user: req.session.user
     });
+  }
 });
 
 app.get('/login', (req, res) => {
