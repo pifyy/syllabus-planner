@@ -53,6 +53,7 @@ An example class with a well structured syllabus.
 There should be 3 main databases:
 - User Database (Student Database)
   - Contains username, email, password
+- Meet time table
 - Class Database
   - Contains the top level of the data of the json response (Professor, class code, meet time, location, etc)
 - Assignment Database
