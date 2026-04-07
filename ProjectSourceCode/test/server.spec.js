@@ -1,6 +1,6 @@
 // ********************** Initialize server **********************************
 
-const server = require('../index'); //TODO: Make sure the path to your index.js is correctly added
+const server = require('../index.js'); //TODO: Make sure the path to your index.js is correctly added
 
 // ********************** Import Libraries ***********************************
 
@@ -111,17 +111,15 @@ describe('File Upload Tests', () => {
   };
 
   before(async () => {
-    agent = chai.request.agent(app);
-    //logs in the agent as a pre-created test user
+  //have the agent connect to server
+    agent = chai.request.agent(server); 
+    //then login before each test
     await agent
       .post('/login')
-      .send({ 
-        username: testUser.username, 
-        password: testUser.password 
-      });
+      .send({ username: testUser.username, password: testUser.password });
   });
 
-  it('should upload a file successfully', async () => {
+  it('Positive: should upload a file successfully', async () => {
       const validPdfBuffer = Buffer.from('%PDF-1.7\n%test data');
 
       const res = await agent
@@ -133,7 +131,7 @@ describe('File Upload Tests', () => {
       expect(res.body.message).to.equal('File uploaded successfully');
   });
 
-  it('should fail to upload a file if it is not a PDF', async () => {
+  it('Negitive: should fail to upload a file if it is not a PDF', async () => {
       const invalidBuffer = Buffer.from('invalid_data');
 
       const res = await agent
@@ -143,5 +141,10 @@ describe('File Upload Tests', () => {
       expect(res).to.have.status(400);
       expect(res.body.error).to.equal('Uploaded file is not a valid PDF');
   });
+  //to prevent hanging
+  after(() => {
+    server.close();
+  });
+
 });
 //======= Non lab related unit tests

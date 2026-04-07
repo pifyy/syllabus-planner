@@ -26,7 +26,7 @@ services:
     volumes:
       - ./:/repository
       - /repository/node_modules
-    #command: 'npm run testandrun' #NOTE: change the command to `npm run testandrun` to run TESTS or "npm start" to no start with tests
-    command: 'npm run testandrun'
+    command: 'npm run testandrun' #NOTE: change the command to `npm run testandrun` to run TESTS or "npm start" to no start with tests
+    #command: 'npm start'
 volumes:
   group-project:
