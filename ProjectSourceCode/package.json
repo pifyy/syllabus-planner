@@ -11,7 +11,8 @@
         "handlebars": "^4.7.8",
         "nodemon": "^3.1.14",
         "pg-promise": "^12.6.1",
-        "multer": "^2.1.1"
+        "multer": "^2.1.1",
+        "@google/genai": "^1.0.0"
     },
     "devDependencies": {
         "mocha": "^6.2.2",
