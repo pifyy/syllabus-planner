@@ -14,7 +14,6 @@ services:
       retries: 5
   web:
     image: node:lts
-    user: 'node'
     working_dir: /repository
     env_file: .env
     environment:
@@ -26,7 +25,8 @@ services:
       - '3000:3000'
     volumes:
       - ./:/repository
-    command: 'npm run testandrun' #NOTE: change the command to `npm run testandrun` to run TESTS or "npm start" to no start with tests
+      - /repository/node_modules
+    command: 'npm start' #NOTE: change the command to `npm run testandrun` to run TESTS or "npm start" to no start with tests
     #command: 'npm start'
 volumes:
   group-project:
