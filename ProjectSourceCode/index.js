@@ -11,6 +11,8 @@ const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
 const { error } = require('console');
 
+const multer = require('multer'); // to properly handle file uploads in our server. 
+const upload = multer({ storage: multer.memoryStorage() }) //specifies that we want the uploaded files to be stored in memory for processing
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
 // *****************************************************
@@ -97,10 +99,7 @@ app.post('/register', async (req, res) => {
     res.redirect('/login');
   } catch (error) {
     console.error('Error during registration: ', error);
-    res.render('./pages/register', {
-      error: 'Registration failed.',
-      user: req.session.user
-    });
+    res.status(400).json({ message: 'Invalid input' });
   }
 });
 
@@ -183,6 +182,21 @@ app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
 
+app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res) => {
+  // check if file is in request
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  // pdf signiture exists in the first 4 bytes of the file
+  // we check for %PDF or 25 50 44 46 bc security :-)
+  const isPDF = req.file.buffer.toString('utf8', 0, 4) == '%PDF';
+  if(!isPDF) {
+    return res.status(400).json({ error: 'Uploaded file is not a valid PDF' });
+  }
+  return res.status(200).json({ status: 'success', message: 'File uploaded successfully' });
+  // Now we may process file. 
+  //processing......
+});
 
 //API calls for TESTING ONLY, no other functionality.
 app.get('/test', (req, res) => {
