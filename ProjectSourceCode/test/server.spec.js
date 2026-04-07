@@ -101,6 +101,47 @@ describe('Testing Render', () => {
 });
 
 //=======  EC UNIT TESTS
+describe('File Upload Tests', () => {
+  let agent;
 
+  //this user is already in the testing.sql build file.
+  const testUser = {
+    username: '123',
+    password: '123',
+  };
 
+  before(async () => {
+    agent = chai.request.agent(app);
+    //logs in the agent as a pre-created test user
+    await agent
+      .post('/login')
+      .send({ 
+        username: testUser.username, 
+        password: testUser.password 
+      });
+  });
+
+  it('should upload a file successfully', async () => {
+      const validPdfBuffer = Buffer.from('%PDF-1.7\n%test data');
+
+      const res = await agent
+          .post('/syllabi/upload')
+          .attach('syllabusFile', validPdfBuffer, 'test.pdf');
+    //pass for valid file buffer
+      expect(res).to.have.status(200);
+      expect(res.body.status).to.equal('success');
+      expect(res.body.message).to.equal('File uploaded successfully');
+  });
+
+  it('should fail to upload a file if it is not a PDF', async () => {
+      const invalidBuffer = Buffer.from('invalid_data');
+
+      const res = await agent
+          .post('/syllabi/upload')
+          .attach('syllabusFile', invalidBuffer, 'image.jpg');
+
+      expect(res).to.have.status(400);
+      expect(res.body.error).to.equal('Uploaded file is not a valid PDF');
+  });
+});
 //======= Non lab related unit tests
