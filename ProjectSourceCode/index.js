@@ -103,7 +103,10 @@ app.post('/register', async (req, res) => {
     res.redirect('/login');
   } catch (error) {
     console.error('Error during registration: ', error);
-    res.status(400).json({ message: 'Invalid input' });
+    res.status(400).render('./pages/register', {
+      error: 'Registration failed.',
+      user: req.session.user
+    });
   }
 });
 
