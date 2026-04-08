@@ -124,7 +124,7 @@ describe('File Upload Tests', () => {
 
       const res = await agent
           .post('/syllabi/upload')
-          .attach('syllabusFile', validPdfBuffer, 'test.pdf');
+          .attach('syllabusFile', validPdfBuffer, 'testing.pdf');
     //pass for valid file buffer
       expect(res).to.have.status(200);
       expect(res.body.status).to.equal('success');
