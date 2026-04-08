@@ -1,0 +1,60 @@
+{
+  "professor": "Professor Name",
+  "class_code": "CSCI 3308",
+  "office_hours": [
+    {
+      "day": "T",
+      "time": "10:00-11:30",
+      "location": "Office 123",
+      "remote" : false
+    },
+    {
+      "day": "Th",
+      "time": "14:00-15:30",
+      "location": "Zoom (link on Canvas)",
+      "remote" : true
+    }
+  ],
+  "location": "ECCR 265",
+  "meeting_times": [
+    {
+      "day": "M",
+      "start-time": "15:35",
+      "end-time": "16:25",
+      "dates": "08/01/2026 - 24/04/2026"
+    },
+    {
+      "day": "W",
+      "start-time": "15:35",
+      "end-time": "16:25",
+      "dates": "08/01/2026 - 24/04/2026"
+    }
+  ],
+  "textbooks": null,
+  "assignments": [
+    {
+      "assignment": "Lab Exercises (Part A & B)",
+      "repeat": true,
+      "due_date": "W",
+      "time": "23:59"
+    },
+    {
+      "assignment": "Weekly Quiz",
+      "repeat": true,
+      "due_date": "Th",
+      "time": "23:59"
+    },
+    {
+      "assignment": "Exam 1",
+      "repeat": false,
+      "due_date": "11/02/2026",
+      "time": "16:00"
+    },
+    {
+      "assignment": "Lecture Participation",
+      "repeat": true,
+      "due_date": "MW",
+      "time": null
+    }
+  ]
+}
