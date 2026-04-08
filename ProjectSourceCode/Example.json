@@ -15,51 +15,46 @@
       "remote" : true
     }
   ],
-  "sections": [
+  "location": "ECCR 265",
+  "meeting_times": [
     {
-      "section": "001",
-      "location": "ECCR 265",
-      "meeting_times": [
-        {
-          "day": "M",
-          "start-time": "15:35",
-          "end-time": "16:25",
-          "dates": "08/01/2026 - 24/04/2026"
-        },
-        {
-          "day": "W",
-          "start-time": "15:35",
-          "end-time": "16:25",
-          "dates": "08/01/2026 - 24/04/2026"
-        }
-      ],
-      "assignments": [
-        {
-          "assignment": "Lab Exercises (Part A & B)",
-          "repeat": true,
-          "due_date": "W",
-          "time": "23:59"
-        },
-        {
-          "assignment": "Weekly Quiz",
-          "repeat": true,
-          "due_date": "Th",
-          "time": "23:59"
-        },
-        {
-          "assignment": "Exam 1",
-          "repeat": false,
-          "due_date": "11/02/2026",
-          "time": "16:00"
-        },
-        {
-          "assignment": "Lecture Participation",
-          "repeat": true,
-          "due_date": "MW",
-          "time": null
-        }
-      ]
+      "day": "M",
+      "start-time": "15:35",
+      "end-time": "16:25",
+      "dates": "08/01/2026 - 24/04/2026"
+    },
+    {
+      "day": "W",
+      "start-time": "15:35",
+      "end-time": "16:25",
+      "dates": "08/01/2026 - 24/04/2026"
     }
   ],
-  "textbooks": null
+  "textbooks": null,
+  "assignments": [
+    {
+      "assignment": "Lab Exercises (Part A & B)",
+      "repeat": true,
+      "due_date": "W",
+      "time": "23:59"
+    },
+    {
+      "assignment": "Weekly Quiz",
+      "repeat": true,
+      "due_date": "Th",
+      "time": "23:59"
+    },
+    {
+      "assignment": "Exam 1",
+      "repeat": false,
+      "due_date": "11/02/2026",
+      "time": "16:00"
+    },
+    {
+      "assignment": "Lecture Participation",
+      "repeat": true,
+      "due_date": "MW",
+      "time": null
+    }
+  ]
 }
