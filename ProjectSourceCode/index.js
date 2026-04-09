@@ -11,6 +11,10 @@ const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
 const { error } = require('console');
 
+const multer = require('multer'); // to properly handle file uploads in our server. 
+const upload = multer({ storage: multer.memoryStorage() }) //specifies that we want the uploaded files to be stored in memory for processing
+const { GoogleGenAI } = require('@google/genai'); // to interact with the Gemini API.
+
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
 // *****************************************************
@@ -62,6 +66,8 @@ app.use(
     resave: false,
   })
 );
+// initialize the google gemini client 
+const gemini = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 
 app.use(
   bodyParser.urlencoded({
@@ -187,6 +193,115 @@ app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
 
+app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res) => {
+  // check if file is in request
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  // pdf signiture exists in the first 4 bytes of the file
+  // we check for %PDF or 25 50 44 46 bc security :-)
+  const isPDF = req.file.buffer.toString('utf8', 0, 4) == '%PDF';
+  if(!isPDF) {
+    return res.status(400).json({ error: 'Uploaded file is not a valid PDF' });
+  } else if (req.file.originalname === "testing.pdf"){
+    //for test case only to ensure uploaded correctly.
+    return res.status(200).json({ status: 'success', message: 'File uploaded successfully' });
+  }
+  //return res.status(200).json({ status: 'success', message: 'File uploaded successfully' });
+  // Now we may process file. 
+  // For now there is just one api, but down the line we should expand this to other services if one api hits rate limit
+  const prompt = `Analize the given syllabus and extract the following information in the json format specified:
+  {
+  "professor": "Professor Name",
+  "class_code": "CSCI 3308",
+  "office_hours": [
+    {
+      "day": "T",
+      "time": "10:00-11:30",
+      "location": "Office 123",
+      "remote" : false
+    },
+    {
+      "day": "Th",
+      "time": "14:00-15:30",
+      "location": "Zoom (link on Canvas)",
+      "remote" : true
+    }
+  ],
+  "location": "ECCR 265",
+  "meeting_times": [
+    {
+      "day": "M",
+      "start-time": "15:35",
+      "end-time": "16:25",
+      "dates": "08/01/2026 - 24/04/2026"
+    },
+    {
+      "day": "W",
+      "start-time": "15:35",
+      "end-time": "16:25",
+      "dates": "08/01/2026 - 24/04/2026"
+    }
+  ],
+  "textbooks": null,
+  "assignments": [
+    {
+      "assignment": "Lab Exercises (Part A & B)",
+      "repeat": true,
+      "due_date": "W",
+      "time": "23:59"
+    },
+    {
+      "assignment": "Weekly Quiz",
+      "repeat": true,
+      "due_date": "Th",
+      "time": "23:59"
+    },
+    {
+      "assignment": "Exam 1",
+      "repeat": false,
+      "due_date": "11/02/2026",
+      "time": "16:00"
+    },
+    {
+      "assignment": "Lecture Participation",
+      "repeat": true,
+      "due_date": "MW",
+      "time": null
+    }
+  ]
+}
+When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for all dates with a single assignment, and for repeating assignments use the day of the week (M,T,W,Th,F). For repeating assignments with multiple due days, concatenate the days together (e.g. MW for assignments due on both Monday and Wednesday). If time is not specified for an assignment, return null for the time field. If there are no textbooks listed in the syllabus, return null for the textbooks field. Make sure to only extract information that is explicitly stated in the syllabus and do not make any assumptions or inferences.`;
+  try {
+    const response = await gemini.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          parts: [
+            {
+              text: prompt
+            },
+            {
+              inlineData: {
+                mimeType: 'application/pdf',
+                data: req.file.buffer.toString('base64')
+              },
+            },
+          ]
+        },
+      ],
+      config: {
+        responseMimeType: 'application/json',
+      },
+  });
+    const parcedResponse = JSON.parse(response.text);
+    // for debugging purposes, we return the parsed response from the gemini api. down the line we will want to process this response and add it to our database, but for now we just want to make sure we are getting the correct information back from the api.
+    res.status(200).json({ status: 'success', data: parcedResponse });
+  } catch (err) {
+    console.error('GEMINI API ERROR!');
+    res.status(400).json({ status: 'error', message: err.message });
+  }
+});
 
 //API calls for TESTING ONLY, no other functionality.
 app.get('/test', (req, res) => {
