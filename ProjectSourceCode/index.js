@@ -87,6 +87,10 @@ app.get('/register', (req, res) => {
   res.render('./pages/register', { user: req.session.user });
 });
 
+app.get('/calendar', (req, res) => {
+  res.render('./pages/calendar', { user: req.session.user });
+});
+
 app.post('/register', async (req, res) => {
   try {
     const hash = await bcrypt.hash(req.body.password, 10);
