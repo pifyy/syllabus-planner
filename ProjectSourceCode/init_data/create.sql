@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS classes (
     classID SERIAL PRIMARY KEY,
     className VARCHAR(60) NOT NULL,
-    term VARCHAR(10),
+    term VARCHAR(20),
     section VARCHAR(10),
     professor VARCHAR(50) NOT NULL,
     classCode VARCHAR(10),

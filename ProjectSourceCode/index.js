@@ -367,7 +367,7 @@ app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res
       "remote": true
     }
   ],
-  "textbooks": null,
+  "textbooks": "Textbook Title by Author Name",
   "sections": [
     {
       "section": "001",
