@@ -299,6 +299,20 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
   }
 });
 
+
+app.get('/AddClasses', auth, (req, res) => {
+  res.render('./pages/addClasses', { user: req.session.user });
+
+  //pull all classes for user.
+
+  //add form for adding a class
+
+  //add form for adding assigments for each class
+
+  //add form for adding meet times for each class
+});
+
+
 //API calls for TESTING ONLY, no other functionality.
 app.get('/test', (req, res) => {
   res.redirect('/login');
