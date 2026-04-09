@@ -86,3 +86,9 @@
   background: var(--terracotta-light);
   transform: scale(1.15);
 }
+.calendar-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1 !important;
+  pointer-events: none !important;
+}
