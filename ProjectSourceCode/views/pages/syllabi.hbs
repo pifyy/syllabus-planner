@@ -12,16 +12,19 @@
             <path d="M10 28a8 8 0 01-2-15.3A10 10 0 0128.3 14 6 6 0 0132 26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </div>
-        <h3 class="upload-title">Drop your syllabus here</h3>
-        <p class="upload-sub">PDF, DOCX, or image - we handle the rest</p>
-        <label class="btn-primary-custom upload-btn" for="fileInput">
-          Browse Files
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </label>
-        <input type="file" id="fileInput" accept=".pdf,.docx,.png,.jpg,.jpeg" style="display:none">
-        <p class="upload-hint">Supports PDF · DOCX · PNG · JPG</p>
+        <form action = "/syllabi/upload" method="POST" enctype="multipart/form-data">
+          <h3 class="upload-title">Drop your syllabus here</h3>
+          <p class="upload-sub">PDF, DOCX, or image - we handle the rest</p>
+          <label class="btn-primary-custom upload-btn" for="fileInput">
+            Browse Files
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </label>
+          <input type="file" name="syllabusFile" id="fileInput" accept=".pdf,.docx,.png,.jpg,.jpeg" style="display:none">
+          <p class="upload-hint">Supports PDF · DOCX · PNG · JPG</p>
+          <button class="btn-primary-custom" type="submit">Upload</button>
+        </form>
       </div>
 
       <div class="upload-processing" id="uploadProcessing">
@@ -70,7 +73,7 @@
               <div class="preview-body">
                 <div class="preview-row">
                   <div class="preview-dot red"></div>
-                  <div class="preview-text"><span>Midterm Exam - Chapters 1–5</span><small>Oct 14, 2026 · 9:00 AM</small></div>
+                  <div class="preview-text"><span>Midterm Exam - Chapters 1-5</span><small>Oct 14, 2026 · 9:00 AM</small></div>
                   <div class="preview-tag exam">Exam</div>
                 </div>
                 <div class="preview-row">

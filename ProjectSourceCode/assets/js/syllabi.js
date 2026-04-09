@@ -32,17 +32,18 @@ function handleFile(file) {
 if (!file) return;
 
 // show processing bar
-processing.classList.add('visible');
+processing.classList.remove('visible');
+processing.style.color = '';
 success.classList.remove('visible');
+processing.classList.add('visible');
 label.textContent = 'Reading file…';
 fill.style.width = '0%';
 
-// animate bar in steps
+// animate bar while upload is in flight
 const steps = [
-    { w: '30%', t: 300,  msg: 'Extracting text…' },
-    { w: '60%', t: 900,  msg: 'Parsing deadlines…' },
-    { w: '85%', t: 1600, msg: 'Building timeline…' },
-    { w: '100%',t: 2200, msg: 'Done!' },
+    { w: '30%', t: 300,  msg: 'Uploading file…' },
+    { w: '60%', t: 900,  msg: 'Validating…' },
+    { w: '85%', t: 1600, msg: 'Almost there…' },
 ];
 
 steps.forEach(s => {
@@ -50,18 +51,4 @@ steps.forEach(s => {
     fill.style.width = s.w;
     label.textContent = s.msg;
     }, s.t);
-});
-
-setTimeout(() => {
-    processing.classList.remove('visible');
-    success.classList.add('visible');
-    const chip = document.createElement('div');
-    chip.className = 'upload-file-chip';
-    chip.innerHTML =
-    '<span class="chip-name">' + file.name + '</span>' +
-    '<button class="chip-remove" onclick="this.parentElement.remove()">×</button>';
-    fileList.appendChild(chip);
-
-    setTimeout(() => success.classList.remove('visible'), 2000);
-}, 2600);
-}
+});}
