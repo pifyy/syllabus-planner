@@ -1,7 +1,198 @@
-<h1>Calendar</h1>
+<div class="calendar-page position-relative overflow-hidden" style="min-height: 100vh; padding-top: 5rem;">
 
-<ul>
-  <li>April 10 - CSCI 3308 Homework</li>
-  <li>April 12 - Group Project Meeting</li>
-  <li>April 15 - Midterm Exam</li>
-</ul>
+  <!-- background flare -->
+  <div style="
+    position:absolute;
+    inset:0;
+    z-index:0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255, 90, 90, 0.14), transparent 28%),
+      radial-gradient(circle at 82% 18%, rgba(60, 120, 255, 0.14), transparent 26%),
+      radial-gradient(circle at 30% 78%, rgba(180, 255, 120, 0.10), transparent 24%),
+      radial-gradient(circle at 75% 72%, rgba(255, 210, 70, 0.10), transparent 22%),
+      linear-gradient(180deg, rgba(7,7,12,0.96) 0%, rgba(5,5,8,1) 100%);
+  "></div>
+
+  <div class="container position-relative" style="z-index:2;">
+    <div class="row g-4">
+
+      <!-- LEFT: MONTH -->
+      <div class="col-lg-5">
+        <div style="
+          background: rgba(16,16,28,0.72);
+          border: 1px solid rgba(255,255,255,0.05);
+          backdrop-filter: blur(14px);
+          border-radius: 28px;
+          padding: 28px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+        ">
+          <h2 class="text-light mb-4">April 2026</h2>
+
+          <!-- WEEK -->
+          <div class="mb-3 p-3" style="
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(255,80,80,0.22), rgba(255,80,80,0.07));
+          ">
+            <div class="d-flex justify-content-between">
+              <span class="text-light">Week 2</span>
+              <span class="fw-bold text-danger">Hard</span>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <span class="text-muted">6</span>
+              <span class="text-muted">7</span>
+              <span onclick="renderDay(8)" style="cursor:pointer; color:#ffd24d;" class="fw-bold">8</span>
+              <span onclick="renderDay(9)" style="cursor:pointer; color:#ffd24d;" class="fw-bold">9</span>
+              <span>10</span>
+              <span>11</span>
+              <span>12</span>
+            </div>
+          </div>
+
+          <div class="p-3" style="
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(120,255,120,0.16), rgba(120,255,120,0.05));
+          ">
+            <div class="d-flex justify-content-between">
+              <span class="text-light">Week 3</span>
+              <span class="fw-bold text-success">Easy</span>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <span>13</span>
+              <span>14</span>
+              <span>15</span>
+              <span>16</span>
+              <span>17</span>
+              <span>18</span>
+              <span>19</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- RIGHT: DAILY VIEW -->
+      <div class="col-lg-7">
+        <div style="
+          background: rgba(16,16,28,0.72);
+          border: 1px solid rgba(255,255,255,0.05);
+          backdrop-filter: blur(14px);
+          border-radius: 28px;
+          padding: 28px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+        ">
+
+          <h2 class="text-light mb-1">Daily View</h2>
+          <div id="selected-date" style="color:#f09a74; font-weight:600;">April 9</div>
+
+          <!-- stress -->
+          <div id="stress-level" class="mt-2 mb-4"></div>
+
+          <!-- timeline -->
+          <div id="daily-events" style="
+            border-left: 2px solid rgba(255,255,255,0.08);
+            padding-left: 20px;
+            transition: all 0.3s ease;
+          "></div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+  const events = {
+    8: [
+      { title: "CSCI 3308 Homework", type: "assignment", time: "Due Tomorrow" }
+    ],
+    9: [
+      { title: "Group Project Meeting", type: "meeting", time: "2:00 PM" },
+      { title: "Midterm Exam", type: "exam", time: "Next Week" },
+      { title: "Physics Lab", type: "lab", time: "6:00 PM" }
+    ]
+  };
+
+  function getStressLevel(dayEvents) {
+    let score = 0;
+
+    dayEvents.forEach(e => {
+      if (e.type === "exam") score += 10;
+      if (e.type === "lab") score += 4;
+      if (e.type === "assignment") score += 2;
+      if (e.type === "meeting") score += 0.5;
+    });
+
+    if (score > 10) return { label: "High Stress", color: "#ff4d57" };
+    if (score > 5) return { label: "Moderate", color: "#ffd24d" };
+    return { label: "Chill", color: "#34d17b" };
+  }
+
+  function animateContainer() {
+    const el = document.getElementById("daily-events");
+    el.style.opacity = 0;
+    el.style.transform = "translateY(10px)";
+
+    setTimeout(() => {
+      el.style.opacity = 1;
+      el.style.transform = "translateY(0)";
+    }, 100);
+  }
+
+  function renderDay(day) {
+    const container = document.getElementById("daily-events");
+    const dateLabel = document.getElementById("selected-date");
+    const dayEvents = events[day] || [];
+
+    dateLabel.innerText = `April ${day}`;
+    container.innerHTML = "";
+
+    animateContainer();
+
+    const colorMap = {
+      assignment: "#2f6fff",
+      meeting: "#9BFF00",
+      exam: "#ff4d57",
+      lab: "#ffd24d"
+    };
+
+    dayEvents.forEach(e => {
+      container.innerHTML += `
+        <div class="mb-4 position-relative">
+          <div style="
+            position:absolute;
+            left:-28px;
+            top:6px;
+            width:10px;
+            height:10px;
+            border-radius:50%;
+            background:${colorMap[e.type]};
+            box-shadow:0 0 10px ${colorMap[e.type]};
+          "></div>
+
+          <div class="text-light fw-bold">${e.title}</div>
+          <small class="text-muted">${e.time}</small>
+        </div>
+      `;
+    });
+
+    const stress = getStressLevel(dayEvents);
+
+    document.getElementById("stress-level").innerHTML = `
+      <span style="
+        background:${stress.color};
+        padding:6px 14px;
+        border-radius:20px;
+        font-size:0.85rem;
+        color:white;
+      ">
+        ${stress.label}
+      </span>
+    `;
+  }
+
+  // default load
+  renderDay(9);
+</script>
