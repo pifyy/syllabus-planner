@@ -122,8 +122,9 @@ app.post('/login', async (req, res) => {
     const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
     if (user && await bcrypt.compare(password, user.password)) {
       req.session.user = user;
-      req.session.save();
-      res.redirect('/dashboard');
+      req.session.save(() => {
+        res.redirect('/dashboard');
+      });
     } else {
       res.render('./pages/login', { error: 'Invalid username or password' });
     }
@@ -183,6 +184,10 @@ app.get('/syllabi', auth, (req, res) => {
 
 app.get('/officehours', auth, (req, res) => {
   res.render('./pages/officehours', { user: req.session.user });
+});
+
+app.get('/settings', auth, (req, res) => {
+  res.render('./pages/settings', { user: req.session.user });
 });
 
 app.get('/welcome', (req, res) => {
