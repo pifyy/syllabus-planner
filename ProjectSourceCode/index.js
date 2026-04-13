@@ -190,6 +190,133 @@ app.get('/settings', auth, (req, res) => {
   res.render('./pages/settings', { user: req.session.user });
 });
 
+app.get('/schedule', auth, async (req, res) => {
+  try {
+    const query = `
+      SELECT
+        a.assignmentID,
+        a.name,
+        a.type,
+        a.due,
+        TO_CHAR(a.due, 'Mon DD, YYYY · HH12:MI AM') AS "formattedDue",
+        c.className
+      FROM assignments a
+      JOIN classes c ON a.classID = c.classID
+      JOIN students_to_classes sc ON c.classID = sc.classID
+      WHERE sc.userID = $1
+        AND a.due >= NOW()
+      ORDER BY a.due ASC
+      LIMIT 30;
+    `;
+    const assignments = await db.any(query, [req.session.user.userid]);
+
+    // Map type to dot color and tag class for the view
+    const typeMap = {
+      'EXAM': { dotColor: 'red',   tagClass: 'exam'   },
+      'QUIZ': { dotColor: 'gold',  tagClass: 'quiz'   },
+      'LAB':  { dotColor: 'gold',  tagClass: 'quiz'   },
+      'HW':   { dotColor: 'blue',  tagClass: 'assign' },
+      'PROJ': { dotColor: 'terra', tagClass: 'proj'   },
+    };
+
+    const enriched = assignments.map(a => {
+      const map = typeMap[a.type.toUpperCase()] || { dotColor: 'blue', tagClass: 'assign' };
+      return { ...a, ...map };
+    });
+
+    res.render('./pages/schedule', {
+      user: req.session.user,
+      assignments: enriched,
+      assignmentsJson: JSON.stringify(enriched)
+    });
+  } catch (err) {
+    console.error('Error loading schedule page:', err);
+    res.render('./pages/schedule', {
+      user: req.session.user,
+      assignments: [],
+      assignmentsJson: '[]'
+    });
+  }
+});
+
+app.post('/schedule/generate', auth, async (req, res) => {
+  try {
+    const query = `
+      SELECT
+        a.name,
+        a.type,
+        TO_CHAR(a.due, 'YYYY-MM-DD HH24:MI') AS due_str,
+        TO_CHAR(a.due, 'Mon DD') AS due_label,
+        c.className
+      FROM assignments a
+      JOIN classes c ON a.classID = c.classID
+      JOIN students_to_classes sc ON c.classID = sc.classID
+      WHERE sc.userID = $1
+        AND a.due >= NOW()
+        AND a.due <= NOW() + INTERVAL '8 weeks'
+      ORDER BY a.due ASC
+      LIMIT 30;
+    `;
+    const assignments = await db.any(query, [req.session.user.userid]);
+
+    if (assignments.length === 0) {
+      return res.status(200).json({ status: 'success', recommendations: [] });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const list = assignments.map(a =>
+      `- "${a.name}" (${a.type}) for ${a.classname}, due ${a.due_str}`
+    ).join('\n');
+
+    const prompt = `You are a study advisor. Today is ${today}.
+
+The student has these upcoming assignments:
+${list}
+
+For each assignment, recommend when the student should START working on it.
+Return ONLY valid JSON — no markdown, no explanation:
+{
+  "recommendations": [
+    {
+      "assignment": "Lab 10",
+      "class": "CSCI 3308",
+      "type": "LAB",
+      "due_label": "Apr 8",
+      "start_by_label": "Apr 6",
+      "days_to_complete": 2,
+      "urgency": "soon",
+      "tip": "One short sentence of practical advice for this specific assignment."
+    }
+  ]
+}
+
+Rules:
+- urgency must be one of: overdue, today, soon, upcoming, plenty_of_time
+  - overdue: due date has already passed
+  - today: should have started already or starts today
+  - soon: start within 1-2 days
+  - upcoming: start within 3-5 days
+  - plenty_of_time: more than 5 days until you need to start
+- days_to_complete: realistic estimate (LAB/HW: 1-2, QUIZ: 1-2, EXAM: 3-7, PROJ: 5-14)
+- start_by_label: a readable date like "Apr 6" — should be days_to_complete days before the due date
+- tip: one concise, specific sentence (not generic advice)
+- Return one entry per assignment in the input list, in the same order`;
+
+    const response = await gemini.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ parts: [{ text: prompt }] }],
+      config: { responseMimeType: 'application/json' }
+    });
+
+    const result = JSON.parse(response.text);
+    res.status(200).json({ status: 'success', recommendations: result.recommendations });
+  } catch (err) {
+    console.error('Schedule generation error:', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
+
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });

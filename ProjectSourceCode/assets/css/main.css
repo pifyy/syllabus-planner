@@ -1094,3 +1094,207 @@ body {
   color: var(--text-muted);
   font-size: 15px;
 }
+
+/* ══════════════════════════════════════════
+   Study Plan Page
+══════════════════════════════════════════ */
+
+.sched-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 100px 40px 60px;
+}
+
+.sched-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+  gap: 1rem;
+}
+
+.sched-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+}
+
+.sched-sub {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+.sched-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sched-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading */
+.sched-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 3rem 0;
+}
+
+.sched-pulse-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.sched-pulse-row {
+  height: 72px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: sched-shimmer 1.4s infinite;
+}
+
+.sched-pulse-row.short { height: 72px; opacity: 0.5; }
+
+@keyframes sched-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.sched-loading-label {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Empty */
+.sched-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.sched-empty a { color: var(--terracotta); }
+
+/* Error */
+.sched-error-msg {
+  background: rgba(192, 90, 90, 0.1);
+  border: 1px solid rgba(192, 90, 90, 0.3);
+  color: var(--red-accent);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  font-size: 14px;
+}
+
+/* Cards list */
+.sched-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sched-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  transition: border-color 0.2s;
+}
+
+.sched-card:hover {
+  border-color: rgba(255,255,255,0.12);
+}
+
+.sched-card-left {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.sched-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.sched-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sched-card-class {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.sched-card-tip {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+  line-height: 1.5;
+}
+
+.sched-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.sched-urgency-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 20px;
+  padding: 0.2rem 0.65rem;
+  margin-bottom: 0.2rem;
+}
+
+.urgency-overdue  { background: rgba(192,90,90,0.15);  color: var(--red-accent);  border: 1px solid rgba(192,90,90,0.3);  }
+.urgency-today    { background: rgba(212,121,90,0.15); color: var(--terracotta);  border: 1px solid rgba(212,121,90,0.3); }
+.urgency-soon     { background: rgba(201,168,76,0.15); color: var(--gold);        border: 1px solid rgba(201,168,76,0.3); }
+.urgency-upcoming { background: rgba(90,127,196,0.15); color: var(--deep-blue);   border: 1px solid rgba(90,127,196,0.3); }
+.urgency-plenty   { background: rgba(90,158,120,0.15); color: var(--sage);        border: 1px solid rgba(90,158,120,0.3); }
+
+.sched-start-date {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.sched-due-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.sched-days-est {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.hidden { display: none !important; }
