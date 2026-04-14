@@ -1,3 +1,93 @@
-<!--Form for adding classes + meet times-->
+<div class="main-wrapper" style="display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100vh; padding: 150px 0 40px 0; gap: 50px; background-color: #0d0d0f; color: #e8e2d8;">
 
-<!--Form for adding assignments for classes the user is enrolled in -->
+  <!-- register form-->
+  <div class="form-container" style="width: 100%; max-width: 500px; background-color: #1c1c24; border: 1px solid rgba(255,255,255,0.07); padding: 25px; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.45);">
+    <form action="/add-class" method="POST">
+      <h2 style="text-align: center; margin-top: 0; color: #d4795a;">Register New Class</h2>
+      
+      <label style="color: #8a8580;">Class Name:</label><br>
+      <input type="text" name="className" required style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <label style="color: #8a8580;">Professor:</label><br>
+      <input type="text" name="professor" required style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <label style="color: #8a8580;">Textbook:</label><br>
+      <input type="text" name="textbook" style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <label style="color: #8a8580;">Contact Email:</label><br>
+      <input type="email" name="email" style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <button type="submit" style="width: 100%; padding: 12px; cursor: pointer; background-color: #d4795a; border: none; color: #e8e2d8; font-weight: bold; border-radius: 4px;">Create Class</button>
+    </form>
+  </div>
+
+  <!-- meet times form -->
+  <div class="form-container" style="width: 100%; max-width: 500px; background-color: #1c1c24; border: 1px solid rgba(255,255,255,0.07); padding: 25px; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.45);">
+    <form action="/add-meet-time" method="POST">
+      <h2 style="text-align: center; margin-top: 0; color: #5a7fc4;">Set Meeting Schedule</h2>
+
+      <label style="color: #8a8580;">Select Class:</label><br>
+      <select name="classID" required style="width: 100%; margin-bottom: 15px; padding: 8px; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+        {{#each classes}}
+          <option value="{{this.classID}}">{{this.className}}</option>
+        {{/each}}
+      </select>
+
+      <label style="color: #8a8580;">Day of the Week:</label><br>
+      <select name="dayOfTheWeek" style="width: 100%; margin-bottom: 15px; padding: 8px; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+        <option value="Monday">Monday</option>
+        <option value="Tuesday">Tuesday</option>
+        <option value="Wednesday">Wednesday</option>
+        <option value="Thursday">Thursday</option>
+        <option value="Friday">Friday</option>
+      </select>
+
+      <label style="color: #8a8580;">Session Type:</label><br>
+      <select name="type" style="width: 100%; margin-bottom: 15px; padding: 8px; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+        <option value="LEC">Lecture (LEC)</option>
+        <option value="REC">Recitation (REC)</option>
+        <option value="LAB">Lab (LAB)</option>
+        <option value="OFH">Office Hours (OFH)</option>
+      </select>
+
+      <label style="color: #8a8580;">Start Time:</label><br>
+      <input type="time" name="time" required style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <label style="color: #8a8580;">Location:</label><br>
+      <input type="text" name="location" required style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <button type="submit" style="width: 100%; padding: 12px; cursor: pointer; background-color: #5a7fc4; border: none; color: #e8e2d8; font-weight: bold; border-radius: 4px;">Add Meet Time</button>
+    </form>
+  </div>
+
+  <!-- assignment form -->
+  <div class="form-container" style="width: 100%; max-width: 500px; background-color: #1c1c24; border: 1px solid rgba(255,255,255,0.07); padding: 25px; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.45);">
+    <form action="/add-assignment" method="POST">
+      <h2 style="text-align: center; margin-top: 0; color: #c9a84c;">Create Assignment</h2>
+
+      <label style="color: #8a8580;">Related Class:</label><br>
+      <select name="classID" required style="width: 100%; margin-bottom: 15px; padding: 8px; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+        {{#each classes}}
+          <option value="{{this.classID}}">{{this.className}}</option>
+        {{/each}}
+      </select>
+
+      <label style="color: #8a8580;">Assignment Name:</label><br>
+      <input type="text" name="name" required style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <label style="color: #8a8580;">Type:</label><br>
+      <input type="text" name="type" placeholder="e.g. Exam, Homework" required style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <label style="color: #8a8580;">Due Date & Time:</label><br>
+      <input type="datetime-local" name="due" required style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <label style="color: #8a8580;">Physical Location:</label><br>
+      <input type="text" name="location" style="width: 100%; margin-bottom: 15px; padding: 8px; box-sizing: border-box; background-color: #16161c; border: 1px solid rgba(255,255,255,0.07); color: #e8e2d8;">
+
+      <input type="hidden" name="userID" value="{{currentUser.userID}}">
+
+      <button type="submit" style="width: 100%; padding: 12px; cursor: pointer; background-color: #c9a84c; border: none; color: #0d0d0f; font-weight: bold; border-radius: 4px;">Save Assignment</button>
+    </form>
+  </div>
+
+</div>
