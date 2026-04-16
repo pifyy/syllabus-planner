@@ -298,6 +298,7 @@ app.get('/welcome', (req, res) => {
 
 // Day string -> int (matches JS Date.getDay(): Su=0, M=1, T=2, W=3, Th=4, F=5, Sa=6)
 function parseDayString(dayStr) {
+  if (!dayStr) return [];
   const map = { 'Su': 0, 'M': 1, 'T': 2, 'W': 3, 'Th': 4, 'F': 5, 'Sa': 6 };
   const tokens = dayStr.match(/Th|Su|Sa|M|T|W|F/g) || [];
   return tokens.map(d => map[d]).filter(n => n !== undefined);
@@ -311,6 +312,7 @@ function parseTimeRange(timeStr) {
 
 // Parse "YYYY-MM-DD - YYYY-MM-DD" into { startDate, endDate }
 function parseDateRange(datesStr) {
+  if (!datesStr) return { startDate: null, endDate: null };
   const [startDate, endDate] = datesStr.split(' - ').map(s => s.trim());
   return { startDate, endDate };
 }
@@ -370,7 +372,7 @@ app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res
       "remote": true
     }
   ],
-  "textbooks": "Textbook Title by Author Name",
+  "textbooks": "Textbook Title by Author Name,
   "sections": [
     {
       "section": "001",
@@ -495,7 +497,27 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
             const dayInts = parseDayString(dayStr);
             const startTime = meetTime['start-time'] || '00:00:00';
             const endTime = meetTime['end-time'] || '00:00:00';
-            const dates = parseDateRange(meetTime.dates);
+            let dates; 
+            if (meetTime.dates){
+              dates = parseDateRange(meetTime.dates);
+            }
+            else {
+              if (term.toLowerCase().includes('spring')) {
+                dates = { startDate: `${new Date().getFullYear()}/01/01`, endDate: `${new Date().getFullYear()}/05/31` };
+              } else if (term.toLowerCase().includes('summer')) {
+                dates = { startDate: `${new Date().getFullYear()}/06/01`, endDate: `${new Date().getFullYear()}/08/31` };
+              } else if (term.toLowerCase().includes('fall')) {
+                dates = { startDate: `${new Date().getFullYear()}/09/01`, endDate: `${new Date().getFullYear()}/12/31` };
+              } else {
+                if (new Date().getMonth() < 5) {
+                  dates = { startDate: `${new Date().getFullYear()}/01/01`, endDate: `${new Date().getFullYear()}/05/31` };
+                } else if (new Date().getMonth() < 8) {
+                  dates = { startDate: `${new Date().getFullYear()}/06/01`, endDate: `${new Date().getFullYear()}/08/31` };
+                } else {
+                  dates = { startDate: `${new Date().getFullYear()}/09/01`, endDate: `${new Date().getFullYear()}/12/31` };
+                }
+              }
+            }
             const location = meetTime.location || 'TBD';
             const remote = meetTime.remote || false;
             const query = 'INSERT INTO meet_times(classID, dayOfTheWeek, type, startTime, endTime, startDate, endDate, location, remote) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)';
@@ -515,9 +537,30 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
               const type = assignment.type;
               const repeat = assignment.repeat;
               const time = parseTime(assignment.time);
+              let dueDayInts;
               if (repeat) {
                 const dueDayStr = assignment.due_date;
-                const dueDayInts = parseDayString(dueDayStr);
+                if (!dueDayStr) {
+                  console.warn('Repeating assignment missing due_date, skipping:', assignmentName);
+                  if (term.toLowerCase().includes('spring')) {
+                    dates = { startDate: `${new Date().getFullYear()}/01/01`, endDate: `${new Date().getFullYear()}/05/31` };
+                  } else if (term.toLowerCase().includes('summer')) {
+                    dates = { startDate: `${new Date().getFullYear()}/06/01`, endDate: `${new Date().getFullYear()}/08/31` };
+                  } else if (term.toLowerCase().includes('fall')) {
+                    dates = { startDate: `${new Date().getFullYear()}/09/01`, endDate: `${new Date().getFullYear()}/12/31` };
+                  } else {
+                    if (new Date().getMonth() < 5) {
+                      dates = { startDate: `${new Date().getFullYear()}/01/01`, endDate: `${new Date().getFullYear()}/05/31` };
+                    } else if (new Date().getMonth() < 8) {
+                      dates = { startDate: `${new Date().getFullYear()}/06/01`, endDate: `${new Date().getFullYear()}/08/31` };
+                    } else {
+                      dates = { startDate: `${new Date().getFullYear()}/09/01`, endDate: `${new Date().getFullYear()}/12/31` };
+                    }
+                  }
+                }
+                else{
+                  dueDayInts = parseDayString(dueDayStr);
+                }
                 for (const dayInt of dueDayInts) {
                   const occurances = getOccurrencesOfDay(dayInt, dates.startDate, dates.endDate);
                   for(const occurence of occurances) {
@@ -557,6 +600,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
     console.error('GEMINI API ERROR!');
     res.status(400).json({ status: 'error', message: err.message });
   }
+  return res.status(200).json({ status: 'success', message: 'File uploaded and processed successfully'});
 });
 
 //API calls for TESTING ONLY, no other functionality.
