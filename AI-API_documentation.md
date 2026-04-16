@@ -1,5 +1,15 @@
 # AI-Implementation
 A quick documentation writeup of how the AI-API works in this project, so we can test and build features for other components. 
+## Steps for functionality
+1. Create a [gemini developer account](https://aistudio.google.com)
+2. Create a new api key by clicking the button in the top right corner of your homepage.
+3. Create application
+4. Click the key section of the new application in the keys section of the page
+5. Add the key as an environment variable in `.env`.
+```
+GEMINI_API_KEY="xxx-xxx-xxx"
+```
+6. Run the application
 ## API Steps
 1. User uploads document to the website
 2. Request is sent to the index.js api using the [multer middleware](https://expressjs.com/en/resources/middleware/multer.html) (extension of express.js)

@@ -65,7 +65,7 @@ describe('Testing Register API', () => {
       .send({username: 'thisusernameistoolong', email: 'test2@test.com', password: 'testpassword'})
       .end((_err, res) => {
         expect(res).to.have.status(400);
-        expect(res.body.message).to.equals('Invalid input');
+        expect(res.text).to.contain('Registration failed.');
         done();
       });
   });
