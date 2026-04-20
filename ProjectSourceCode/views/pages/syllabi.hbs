@@ -12,7 +12,7 @@
             <path d="M10 28a8 8 0 01-2-15.3A10 10 0 0128.3 14 6 6 0 0132 26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </div>
-        <form action="/syllabi/upload" method="POST" enctype="multipart/form-data">
+        <form id="uploadForm" action="/syllabi/upload" method="POST" enctype="multipart/form-data">
           <h3 class="upload-title">Drop your syllabus here</h3>
           <p class="upload-sub">PDF, DOCX, or image - we handle the rest</p>
           <label class="btn-primary-custom upload-btn" for="fileInput">
@@ -23,7 +23,6 @@
           </label>
           <input type="file" name="syllabusFile" id="fileInput" accept=".pdf,.docx,.png,.jpg,.jpeg" style="display:none">
           <p class="upload-hint">Supports PDF · DOCX · PNG · JPG</p>
-          <button class="btn-primary-custom" type="submit">Upload</button>
         </form>
       </div>
 
@@ -57,14 +56,38 @@
         <!-- Tab panels — one per enrolled class -->
         <div class="tab-panels">
           {{#each classes}}
-          <div class="tab-panel{{#if isFirst}} active{{/if}}" id="tab-{{classID}}">
+          <div class="tab-panel{{#if isFirst}} active{{/if}}" id="tab-{{classID}}" data-classid="{{classID}}">
 
             <div class="syllabus-header">
               <div>
                 <h2 class="syllabus-title">{{className}}</h2>
                 <p class="syllabus-code">{{classCode}} · {{term}}</p>
               </div>
-              <div class="preview-tag assign">{{assignments.length}} Items</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <div class="preview-tag assign">{{assignments.length}} Items</div>
+                <button class="syllabus-action-btn edit-btn"
+                  data-classid="{{classID}}"
+                  data-classname="{{className}}"
+                  data-classcode="{{classCode}}"
+                  data-term="{{term}}"
+                  data-professor="{{professor}}"
+                  data-textbook="{{textbook}}"
+                  title="Edit class">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.5 2.5a1.5 1.5 0 012.12 2.12L5 13.25l-3 .75.75-3L11.5 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Edit
+                </button>
+                <button class="syllabus-action-btn remove-btn"
+                  data-classid="{{classID}}"
+                  data-classname="{{className}}"
+                  title="Remove class">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 4h10M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Remove
+                </button>
+              </div>
             </div>
 
             <div class="syllabus-meta">
@@ -97,7 +120,13 @@
             <div class="preview-card">
               <div class="preview-body">
                 {{#each assignments}}
-                <div class="preview-row">
+                <div class="preview-row assignment-row"
+                  data-assignmentid="{{assignmentID}}"
+                  data-name="{{name}}"
+                  data-type="{{type}}"
+                  data-duedate="{{rawDueDate}}"
+                  data-duetime="{{rawDueTime}}"
+                  title="Click to edit">
                   <div class="preview-dot {{dotClass}}"></div>
                   <div class="preview-text">
                     <span>{{name}}</span>
@@ -128,4 +157,118 @@
     </div>
   </div>
 </div>
+
+{{#if hasClasses}}
+<!-- ── Floating Add Assignment Button ── -->
+<button class="fab-add" id="fabAdd" title="Add assignment">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  </svg>
+</button>
+{{/if}}
+
+<!-- ── Assignment Modal (shared for add + edit) ── -->
+<div class="modal-backdrop" id="assignmentModalBackdrop">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="assignmentModalTitle">Add Assignment</span>
+      <button class="modal-close" id="assignmentModalClose">&times;</button>
+    </div>
+    <form id="assignmentForm" class="modal-body">
+      <input type="hidden" id="asgAssignmentID">
+      <input type="hidden" id="asgClassID">
+
+      <div class="modal-field">
+        <label class="modal-label" for="asgName">Title</label>
+        <input class="modal-input" type="text" id="asgName" placeholder="e.g. Midterm Exam" required>
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-field">
+          <label class="modal-label" for="asgDate">Due Date</label>
+          <input class="modal-input" type="date" id="asgDate">
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="asgTime">Due Time</label>
+          <input class="modal-input" type="time" id="asgTime">
+        </div>
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label" for="asgType">Type</label>
+        <select class="modal-input modal-select" id="asgType">
+          <option value="Assignment">Assignment</option>
+          <option value="Exam">Exam</option>
+          <option value="Project">Project</option>
+          <option value="Lab">Lab</option>
+        </select>
+      </div>
+
+      <div class="modal-error" id="asgError"></div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-danger" id="asgDeleteBtn" style="display:none;margin-right:auto;">Delete</button>
+        <button type="button" class="btn-ghost" id="asgCancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary-custom" id="asgSubmitBtn">Add Assignment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Edit Class Modal ── -->
+<div class="modal-backdrop" id="editModalBackdrop">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Edit Class</span>
+      <button class="modal-close" id="editModalClose">&times;</button>
+    </div>
+    <form id="editClassForm" class="modal-body">
+      <input type="hidden" id="editClassID">
+      <div class="modal-field">
+        <label class="modal-label" for="editClassName">Class Name</label>
+        <input class="modal-input" type="text" id="editClassName" required>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label" for="editClassCode">Class Code</label>
+        <input class="modal-input" type="text" id="editClassCode">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label" for="editTerm">Term</label>
+        <input class="modal-input" type="text" id="editTerm">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label" for="editProfessor">Professor</label>
+        <input class="modal-input" type="text" id="editProfessor">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label" for="editTextbook">Textbook</label>
+        <input class="modal-input" type="text" id="editTextbook">
+      </div>
+      <div class="modal-error" id="editError"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" id="editCancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary-custom">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Remove Class Modal ── -->
+<div class="modal-backdrop" id="removeModalBackdrop">
+  <div class="modal-box modal-box--sm">
+    <div class="modal-header">
+      <span class="modal-title">Remove Class</span>
+      <button class="modal-close" id="removeModalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-confirm-text">Remove <strong id="removeClassName"></strong> from your profile? This cannot be undone.</p>
+      <div class="modal-error" id="removeError"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" id="removeCancelBtn">Cancel</button>
+        <button type="button" class="btn-danger" id="removeConfirmBtn">Remove Class</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="/assets/js/syllabi.js"></script>

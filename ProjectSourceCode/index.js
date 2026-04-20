@@ -209,6 +209,7 @@ app.get('/syllabi', auth, async (req, res) => {
       'Quiz':       { dot: 'gold',  tag: 'quiz'   },
       'Assignment': { dot: 'blue',  tag: 'assign' },
       'Project':    { dot: 'terra', tag: 'proj'   },
+      'Lab':        { dot: 'green', tag: 'lab'    },
     };
 
     const classMap = {};
@@ -229,15 +230,19 @@ app.get('/syllabi', auth, async (req, res) => {
       }
       if (row.assignmentid) {
         const style = typeStyles[row.assignmenttype] || { dot: 'blue', tag: 'assign' };
+        const rawDate = row.duedate ? new Date(row.duedate).toISOString().slice(0, 10) : '';
         classMap[row.classid].assignments.push({
-          name:     row.assignmentname,
-          type:     row.assignmenttype,
-          dueDate:  row.duedate
+          assignmentID: row.assignmentid,
+          name:         row.assignmentname,
+          type:         row.assignmenttype,
+          dueDate:      row.duedate
             ? new Date(row.duedate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
             : null,
-          dueTime:  row.duetime ? row.duetime.slice(0, 5) : null,
-          dotClass: style.dot,
-          tagClass: style.tag
+          dueTime:      row.duetime ? row.duetime.slice(0, 5) : null,
+          rawDueDate:   rawDate,
+          rawDueTime:   row.duetime ? row.duetime.slice(0, 5) : '',
+          dotClass:     style.dot,
+          tagClass:     style.tag
         });
       }
     }
@@ -632,6 +637,126 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
     res.status(400).json({ status: 'error', message: err.message });
   }
   return res.status(200).json({ status: 'success', message: 'File uploaded and processed successfully'});
+});
+
+// Create a new assignment
+app.post('/assignments', auth, async (req, res) => {
+  try {
+    const uid = req.session.user.userid;
+    const { classID, name, type, dueDate, dueTime } = req.body;
+
+    // Verify enrollment
+    const enrollment = await db.oneOrNone(
+      'SELECT 1 FROM students_to_classes WHERE classID = $1 AND userID = $2',
+      [classID, uid]
+    );
+    if (!enrollment) return res.status(403).json({ error: 'Not enrolled in this class' });
+
+    await db.none(
+      `INSERT INTO assignments (classID, name, type, dueDate, dueTime, repeat, userID)
+       VALUES ($1, $2, $3, $4, $5, false, $6)`,
+      [classID, name, type, dueDate || null, dueTime || null, uid]
+    );
+
+    res.json({ status: 'success' });
+  } catch (err) {
+    console.error('CREATE ASSIGNMENT ERROR:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Edit an assignment
+app.put('/assignments/:id', auth, async (req, res) => {
+  try {
+    const uid = req.session.user.userid;
+    const assignmentID = parseInt(req.params.id);
+    const { name, type, dueDate, dueTime } = req.body;
+
+    // Verify the assignment belongs to a class the user is enrolled in
+    const check = await db.oneOrNone(
+      `SELECT a.assignmentID FROM assignments a
+       JOIN students_to_classes sc ON sc.classID = a.classID
+       WHERE a.assignmentID = $1 AND sc.userID = $2`,
+      [assignmentID, uid]
+    );
+    if (!check) return res.status(403).json({ error: 'Not authorized' });
+
+    await db.none(
+      'UPDATE assignments SET name = $1, type = $2, dueDate = $3, dueTime = $4 WHERE assignmentID = $5',
+      [name, type, dueDate || null, dueTime || null, assignmentID]
+    );
+
+    res.json({ status: 'success' });
+  } catch (err) {
+    console.error('EDIT ASSIGNMENT ERROR:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete an assignment
+app.delete('/assignments/:id', auth, async (req, res) => {
+  try {
+    const uid = req.session.user.userid;
+    const assignmentID = parseInt(req.params.id);
+
+    const check = await db.oneOrNone(
+      `SELECT a.assignmentID FROM assignments a
+       JOIN students_to_classes sc ON sc.classID = a.classID
+       WHERE a.assignmentID = $1 AND sc.userID = $2`,
+      [assignmentID, uid]
+    );
+    if (!check) return res.status(403).json({ error: 'Not authorized' });
+
+    await db.none('DELETE FROM assignments WHERE assignmentID = $1', [assignmentID]);
+
+    res.json({ status: 'success' });
+  } catch (err) {
+    console.error('DELETE ASSIGNMENT ERROR:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Edit class details (only fields the user can reasonably change)
+app.put('/syllabi/class/:classID', auth, async (req, res) => {
+  try {
+    const uid = req.session.user.userid;
+    const classID = parseInt(req.params.classID);
+    const { className, classCode, term, professor, textbook } = req.body;
+
+    const enrollment = await db.oneOrNone(
+      'SELECT 1 FROM students_to_classes WHERE classID = $1 AND userID = $2',
+      [classID, uid]
+    );
+    if (!enrollment) return res.status(403).json({ error: 'Not enrolled in this class' });
+
+    await db.none(
+      'UPDATE classes SET className = $1, classCode = $2, term = $3, professor = $4, textbook = $5 WHERE classID = $6',
+      [className, classCode, term, professor, textbook || null, classID]
+    );
+
+    res.json({ status: 'success' });
+  } catch (err) {
+    console.error('EDIT CLASS ERROR:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Remove class from user profile (unenroll — does not delete the class record itself)
+app.delete('/syllabi/class/:classID', auth, async (req, res) => {
+  try {
+    const uid = req.session.user.userid;
+    const classID = parseInt(req.params.classID);
+
+    await db.none(
+      'DELETE FROM students_to_classes WHERE classID = $1 AND userID = $2',
+      [classID, uid]
+    );
+
+    res.json({ status: 'success' });
+  } catch (err) {
+    console.error('REMOVE CLASS ERROR:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 //API calls for TESTING ONLY, no other functionality.
