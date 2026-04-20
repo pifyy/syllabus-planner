@@ -1,7 +1,5 @@
 <div class="content-layer">
   <div class="syllabi-layout">
-
-    <!-- ── Left: Upload Panel ── -->
     <div class="syllabi-upload-panel">
       <div class="dash-panel-label">Upload Syllabi</div>
 
@@ -14,15 +12,15 @@
         </div>
         <form id="uploadForm" action="/syllabi/upload" method="POST" enctype="multipart/form-data">
           <h3 class="upload-title">Drop your syllabus here</h3>
-          <p class="upload-sub">PDF, DOCX, or image - we handle the rest</p>
+          <p class="upload-sub">PDF - we handle the rest</p>
           <label class="btn-primary-custom upload-btn" for="fileInput">
             Browse Files
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </label>
-          <input type="file" name="syllabusFile" id="fileInput" accept=".pdf,.docx,.png,.jpg,.jpeg" style="display:none">
-          <p class="upload-hint">Supports PDF · DOCX · PNG · JPG</p>
+          <input type="file" name="syllabusFile" id="fileInput" accept=".pdf" style="display:none"> <!-- We only support PDF, this is because it costs too much processing power to use other formats that cannot be easilly text extractable. if someone wants to buy us a bunch of tokens so that we can feel free :))) -->
+          <p class="upload-hint">Supports PDF</p>
         </form>
       </div>
 
@@ -38,11 +36,9 @@
 
       <div class="upload-file-list" id="uploadFileList"></div>
     </div>
-
-    <!-- ── Right: Syllabi View Panel ── -->
     <div class="syllabi-view-panel">
       <div class="dash-panel-label">Your Syllabi</div>
-
+      
       {{#if hasClasses}}
       <div class="syllabi-tabs">
 

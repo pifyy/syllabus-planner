@@ -1,25 +1,64 @@
-/* colorpallete dark theme but may add a light theme :-) TODO ADD MORE COLORS :( */
+/* ── Theme variables — dark (default) ── */
 :root {
+  /* Backgrounds */
   --bg-base:         #0d0d0f;
   --bg-surface:      #16161c;
   --bg-card:         #1c1c24;
   --bg-card-hover:   #22222e;
+
+  /* Brand / accent (same in both themes) */
   --terracotta:      #d4795a;
   --terracotta-light:#e0967a;
   --deep-blue:       #5a7fc4;
   --muted-blue:      #7a90b8;
-  --text-primary:    #e8e2d8;
-  --text-muted:      #8a8580;
   --gold:            #c9a84c;
   --light-gold:      #dfc278;
   --red-accent:      #c05a5a;
   --sage:            #5a9e78;
   --sage-light:      #7ab896;
+
+  /* Text */
+  --text-primary:    #e8e2d8;
+  --text-muted:      #8a8580;
+
+  /* Borders & shadows */
   --border:          rgba(255,255,255,0.07);
   --border-accent:   rgba(212,121,90,0.25);
   --shadow-sm:       0 2px 12px rgba(0,0,0,0.35);
   --shadow-md:       0 8px 32px rgba(0,0,0,0.45);
   --shadow-lg:       0 20px 60px rgba(0,0,0,0.55);
+
+  /* Semantic surface overlays */
+  --navbar-scrolled-bg: rgba(13,13,15,0.92);
+  --hero-inner-bg:      rgba(22,22,28,0.75);
+  --features-bg:        rgba(22,22,28,0.5);
+  --footer-bg:          rgba(13,13,15,0.85);
+}
+
+/* ── Theme variables — light ── */
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-base:         #f5f2ed;
+  --bg-surface:      #edeae3;
+  --bg-card:         #e6e2d8;
+  --bg-card-hover:   #dedad0;
+
+  /* Text */
+  --text-primary:    #1a1816;
+  --text-muted:      #6b6660;
+
+  /* Borders & shadows */
+  --border:          rgba(0,0,0,0.09);
+  --border-accent:   rgba(212,121,90,0.3);
+  --shadow-sm:       0 2px 12px rgba(0,0,0,0.07);
+  --shadow-md:       0 8px 32px rgba(0,0,0,0.10);
+  --shadow-lg:       0 20px 60px rgba(0,0,0,0.14);
+
+  /* Semantic surface overlays */
+  --navbar-scrolled-bg: rgba(245,242,237,0.94);
+  --hero-inner-bg:      rgba(237,234,227,0.85);
+  --features-bg:        rgba(237,234,227,0.6);
+  --footer-bg:          rgba(237,234,227,0.9);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -67,7 +106,7 @@ body {
 }
 
 #navbar.scrolled {
-  background: rgba(13,13,15,0.92) !important;
+  background: var(--navbar-scrolled-bg) !important;
   backdrop-filter: blur(20px);
   box-shadow: 0 1px 20px rgba(0,0,0,0.4);
   padding: 12px 0;
@@ -135,7 +174,7 @@ body {
 .hero-inner {
   max-width: 800px;
   width: 100%;
-  background: rgba(22,22,28,0.75);
+  background: var(--hero-inner-bg);
   backdrop-filter: blur(30px);
   border-radius: 28px;
   padding: 70px 60px;
@@ -270,7 +309,7 @@ body {
 
 /* ── Features Section ── */
 .features-section {
-  background: rgba(22,22,28,0.5);
+  background: var(--features-bg);
   backdrop-filter: blur(10px);
   padding: 100px 0;
 }
@@ -499,7 +538,7 @@ body {
 .site-footer {
   padding: 40px 0;
   border-top: 1px solid var(--border);
-  background: rgba(13,13,15,0.85);
+  background: var(--footer-bg);
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 1;
@@ -1256,11 +1295,9 @@ body {
 
 .dropdown-menu {
   z-index: 4000 !important;
-  background: #1b1b24 !important;
-  opacity: 1!important;
-  /* background-color: var(--bg-surface);
+  background: var(--bg-surface) !important;
   border: 1px solid var(--border) !important;
-  color: var(--text-primary); */
+  opacity: 1 !important;
 }
 
 .dropdown-item {

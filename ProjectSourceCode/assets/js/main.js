@@ -1,6 +1,18 @@
-//JS elements for the pages
 
-// ── Navbar scroll effect ──
+(function () {
+  const mq = window.matchMedia('(prefers-color-scheme: light)');
+
+  function applyTheme(isLight) {
+    document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
+  }
+
+  // Apply immediately (before first paint to avoid flash)
+  applyTheme(mq.matches);
+
+  // Update whenever the OS preference changes
+  mq.addEventListener('change', e => applyTheme(e.matches));
+})();
+
 const navbar = document.getElementById('navbar');
 if (navbar) {
   window.addEventListener('scroll', () => {

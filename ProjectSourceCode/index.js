@@ -343,7 +343,15 @@ function getOccurrencesOfDay(dayInt, startDateStr, endDateStr) {
   }
   return dates;
 }
-
+/*
+Quite a large function, but here is an overview:
+1. We first check if the file uploaded is a PDF, and if not we return an error. This is done for security purposes as well as to ensure we are processing the proper file
+2. We use our constructed prompt to send the file to either the Gemini API or the Qwen API depending on the users settings. This is done in the ai_provider field of the user table in our database. 
+  0 = Gemini, 1 = Qwen (default for now)
+3. After sending the request we get a json response with the important information
+4. There are several parcing functions to extract the relavent information from the response and put it in the proper format for our database. 
+5. If everything is okay a success message is returned.
+*/
 app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res) => {
   // check if file is in request
   if (!req.file) {
