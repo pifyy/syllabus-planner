@@ -14,7 +14,7 @@ const { error } = require('console');
 const multer = require('multer'); // to properly handle file uploads in our server. 
 const upload = multer({ storage: multer.memoryStorage() }) //specifies that we want the uploaded files to be stored in memory for processing
 const { GoogleGenAI } = require('@google/genai'); // to interact with the Gemini API.
-const { OpenAI, toFile } = require('openai'); // to interact with Qwen via Alibaba Cloud DashScope.
+const pdfParse = require('pdf-parse'); // to extract text from PDFs for text-only models.
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -69,11 +69,7 @@ app.use(
 );
 // initialize the google gemini client
 const gemini = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
-// initialize the Qwen client via Alibaba Cloud DashScope (OpenAI-compatible)
-const qwenClient = new OpenAI({
-  apiKey: process.env.QWEN_API_KEY,
-  baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
-});
+const QWEN_API_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
 
 app.use(
   bodyParser.urlencoded({
@@ -202,7 +198,7 @@ app.get('/syllabi', auth, async (req, res) => {
       SELECT c.classID, mt.dayOfTheWeek, mt.startTime, mt.endTime, mt.location
       FROM students_to_classes sc
       JOIN classes c ON sc.classID = c.classID
-      JOIN meet_times mt ON mt.classID = c.classID AND mt.type = 1
+      JOIN meet_times mt ON mt.classID = c.classID AND mt.type = 'LEC'
       WHERE sc.userID = $1
       ORDER BY c.classID, mt.dayOfTheWeek
     `, [uid]);
@@ -430,7 +426,7 @@ app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res
     }
   ]
 }
-When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for all dates with a single assignment, and for repeating assignments use the day of the week (M,T,W,Th,F). For repeating assignments with multiple due days, concatenate the days together (e.g. MW for assignments due on both Monday and Wednesday). If time is not specified for an assignment, return null for the time field. If there are no textbooks listed in the syllabus, return null for the textbooks field. Make sure to only extract information that is explicitly stated in the syllabus and do not make any assumptions or inferences. Adhere strictly to the given json format, if there is no data for a specific section, make the value null`;
+When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for all dates with a single assignment, and for repeating assignments use the day of the week (M,T,W,Th,F). For repeating assignments with multiple due days, concatenate the days together (e.g. MW for assignments due on both Monday and Wednesday). If time is not specified for an assignment, return null for the time field. If there are no textbooks listed in the syllabus, return null for the textbooks field. Make sure to only extract information that is explicitly stated in the syllabus and do not make any assumptions or inferences. Adhere strictly to the given json format, if there is no data for a specific section, make the value null. Assignment types should be only "Exam", "Quiz", "Assignment", or "Project".`;
 
   const aiProvider = req.session.user.ai_provider ?? 1;
   let parcedResponse;
@@ -467,33 +463,46 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
     console.log('Parsed response from Gemini API:', parcedResponse);
   } else {
     // --- Qwen via Alibaba Cloud DashScope (OpenAI-compatible) ---
-    let uploadedFile;
+    // qwen3.5-flash is a text model, so we extract the PDF text and include it inline.
+    let pdfText;
     try {
-      uploadedFile = await qwenClient.files.create({
-        file: await toFile(req.file.buffer, req.file.originalname, { type: 'application/pdf' }),
-        purpose: 'file-extract',
-      });
+      const parsed = await pdfParse(req.file.buffer);
+      pdfText = parsed.text;
     } catch (err) {
-      console.error('Error uploading file to Qwen API:', err);
-      return res.status(500).json({ error: 'An error occurred while uploading the syllabus for processing. Please try again later.' });
+      console.error('Error extracting PDF text:', err);
+      return res.status(500).json({ error: 'An error occurred while reading the syllabus PDF. Please try again later.' });
     }
 
-    let completion;
+    // Truncate to avoid oversized requests
+    const truncatedText = pdfText.slice(0, 15000);
+
+    let qwenResponse;
     try {
-      completion = await qwenClient.chat.completions.create({
-        model: 'qwen3.5-flash',
-        messages: [
-          { role: 'system', content: `fileid://${uploadedFile.id}` },
-          { role: 'user', content: prompt },
-        ],
-        response_format: { type: 'json_object' },
-      });
+      qwenResponse = await axios.post(
+        QWEN_API_URL,
+        {
+          model: 'qwen3.5-flash',
+          messages: [
+            { role: 'user', content: `${prompt}\n\nSyllabus content:\n${truncatedText}` },
+          ],
+          enable_thinking: false,  // disable Qwen3 thinking mode so the response is plain JSON
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.QWEN_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
     } catch (err) {
-      console.error('Error calling Qwen API:', err);
+      console.error('Error calling Qwen API:', err.response?.data || err.message);
       return res.status(500).json({ error: 'An error occurred while processing the syllabus. Please try again later.' });
     }
 
-    const data = JSON.parse(completion.choices[0].message.content);
+    const rawContent = qwenResponse.data.choices[0].message.content;
+    // Strip markdown code fences if model wraps output in ```json ... ```
+    const jsonStr = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    const data = JSON.parse(jsonStr);
     parcedResponse = Array.isArray(data) ? data[0] : data;
     console.log('Parsed response from Qwen API:', parcedResponse);
   }
