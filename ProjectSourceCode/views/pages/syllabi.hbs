@@ -12,7 +12,7 @@
             <path d="M10 28a8 8 0 01-2-15.3A10 10 0 0128.3 14 6 6 0 0132 26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </div>
-        <form action = "/syllabi/upload" method="POST" enctype="multipart/form-data">
+        <form id="uploadForm" action="/syllabi/upload" method="POST" enctype="multipart/form-data">
           <h3 class="upload-title">Drop your syllabus here</h3>
           <p class="upload-sub">PDF, DOCX, or image - we handle the rest</p>
           <label class="btn-primary-custom upload-btn" for="fileInput">
@@ -23,7 +23,6 @@
           </label>
           <input type="file" name="syllabusFile" id="fileInput" accept=".pdf,.docx,.png,.jpg,.jpeg" style="display:none">
           <p class="upload-hint">Supports PDF · DOCX · PNG · JPG</p>
-          <button class="btn-primary-custom" type="submit">Upload</button>
         </form>
       </div>
 
@@ -40,176 +39,236 @@
       <div class="upload-file-list" id="uploadFileList"></div>
     </div>
 
+    <!-- ── Right: Syllabi View Panel ── -->
     <div class="syllabi-view-panel">
       <div class="dash-panel-label">Your Syllabi</div>
 
+      {{#if hasClasses}}
       <div class="syllabi-tabs">
+
+        <!-- Tab buttons — one per enrolled class -->
         <div class="tab-bar" id="tabBar">
-          <button class="tab-btn active" data-tab="physics">Quantum Physics</button>
-          <button class="tab-btn" data-tab="philosophy">Modern Philosophy</button>
-          <button class="tab-btn" data-tab="algebra">Linear Algebra</button>
-          <button class="tab-btn" data-tab="dataviz">Data Visualization</button>
+          {{#each classes}}
+          <button class="tab-btn{{#if isFirst}} active{{/if}}" data-tab="{{classID}}">{{className}}</button>
+          {{/each}}
         </div>
 
+        <!-- Tab panels — one per enrolled class -->
         <div class="tab-panels">
+          {{#each classes}}
+          <div class="tab-panel{{#if isFirst}} active{{/if}}" id="tab-{{classID}}" data-classid="{{classID}}">
 
-          <div class="tab-panel active" id="tab-physics">
             <div class="syllabus-header">
               <div>
-                <h2 class="syllabus-title">Quantum Physics</h2>
-                <p class="syllabus-code">PHYS 3410 · Fall 2026</p>
+                <h2 class="syllabus-title">{{className}}</h2>
+                <p class="syllabus-code">{{classCode}} · {{term}}</p>
               </div>
-              <div class="preview-tag exam">4 Exams</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <div class="preview-tag assign">{{assignments.length}} Items</div>
+                <button class="syllabus-action-btn edit-btn"
+                  data-classid="{{classID}}"
+                  data-classname="{{className}}"
+                  data-classcode="{{classCode}}"
+                  data-term="{{term}}"
+                  data-professor="{{professor}}"
+                  data-textbook="{{textbook}}"
+                  title="Edit class">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.5 2.5a1.5 1.5 0 012.12 2.12L5 13.25l-3 .75.75-3L11.5 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Edit
+                </button>
+                <button class="syllabus-action-btn remove-btn"
+                  data-classid="{{classID}}"
+                  data-classname="{{className}}"
+                  title="Remove class">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 4h10M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Remove
+                </button>
+              </div>
             </div>
+
             <div class="syllabus-meta">
-              <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Dr. Elena Vasquez</span></div>
-              <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">MWF 9:00 – 9:50 AM</span></div>
-              <div class="meta-item"><span class="meta-label">Room</span><span class="meta-value">Duane Physics G1B30</span></div>
-              <div class="meta-item"><span class="meta-label">Office Hours</span><span class="meta-value">T 3:00 – 4:30 PM (Zoom)</span></div>
-              <div class="meta-item"><span class="meta-label">Email</span><span class="meta-value">elena.vasquez@university.edu</span></div>
+              <div class="meta-item">
+                <span class="meta-label">Professor</span>
+                <span class="meta-value">{{professor}}</span>
+              </div>
+              {{#if scheduleStr}}
+              <div class="meta-item">
+                <span class="meta-label">Schedule</span>
+                <span class="meta-value">{{scheduleStr}}</span>
+              </div>
+              {{/if}}
+              {{#if location}}
+              <div class="meta-item">
+                <span class="meta-label">Room</span>
+                <span class="meta-value">{{location}}</span>
+              </div>
+              {{/if}}
+              {{#if textbook}}
+              <div class="meta-item">
+                <span class="meta-label">Textbook</span>
+                <span class="meta-value">{{textbook}}</span>
+              </div>
+              {{/if}}
             </div>
-            <div class="event-list-label">Upcoming Deadlines</div>
+
+            <div class="event-list-label">Assignments</div>
+            {{#if assignments}}
             <div class="preview-card">
               <div class="preview-body">
-                <div class="preview-row">
-                  <div class="preview-dot red"></div>
-                  <div class="preview-text"><span>Midterm Exam - Chapters 1-5</span><small>Oct 14, 2026 · 9:00 AM</small></div>
-                  <div class="preview-tag exam">Exam</div>
+                {{#each assignments}}
+                <div class="preview-row assignment-row"
+                  data-assignmentid="{{assignmentID}}"
+                  data-name="{{name}}"
+                  data-type="{{type}}"
+                  data-duedate="{{rawDueDate}}"
+                  data-duetime="{{rawDueTime}}"
+                  title="Click to edit">
+                  <div class="preview-dot {{dotClass}}"></div>
+                  <div class="preview-text">
+                    <span>{{name}}</span>
+                    <small>
+                      {{#if dueDate}}{{dueDate}}{{#if dueTime}} · {{dueTime}}{{/if}}{{else}}Repeating{{/if}}
+                    </small>
+                  </div>
+                  <div class="preview-tag {{tagClass}}">{{type}}</div>
                 </div>
-                <div class="preview-row">
-                  <div class="preview-dot blue"></div>
-                  <div class="preview-text"><span>Problem Set 4</span><small>Oct 20, 2026 · 11:59 PM</small></div>
-                  <div class="preview-tag assign">Assignment</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot gold"></div>
-                  <div class="preview-text"><span>Lab Report - Wave Functions</span><small>Oct 28, 2026 · 5:00 PM</small></div>
-                  <div class="preview-tag quiz">Lab</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot red"></div>
-                  <div class="preview-text"><span>Final Exam</span><small>Dec 16, 2026 · 7:30 AM</small></div>
-                  <div class="preview-tag exam">Exam</div>
-                </div>
+                {{/each}}
               </div>
             </div>
-          </div>
+            {{else}}
+            <p class="upload-hint">No assignments found for this class.</p>
+            {{/if}}
 
-          <div class="tab-panel" id="tab-philosophy">
-            <div class="syllabus-header">
-              <div>
-                <h2 class="syllabus-title">Modern Philosophy</h2>
-                <p class="syllabus-code">PHIL 2600 · Fall 2026</p>
-              </div>
-              <div class="preview-tag assign">3 Essays</div>
-            </div>
-            <div class="syllabus-meta">
-              <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Prof. James Hartwell</span></div>
-              <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">TR 11:00 AM – 12:15 PM</span></div>
-              <div class="meta-item"><span class="meta-label">Room</span><span class="meta-value">Hellems 141</span></div>
-            </div>
-            <div class="event-list-label">Upcoming Deadlines</div>
-            <div class="preview-card">
-              <div class="preview-body">
-                <div class="preview-row">
-                  <div class="preview-dot blue"></div>
-                  <div class="preview-text"><span>Essay Draft</span><small>Oct 16, 2026 · 11:59 PM</small></div>
-                  <div class="preview-tag assign">Assignment</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot gold"></div>
-                  <div class="preview-text"><span>Reading Response</span><small>Oct 22, 2026 · 11:59 PM</small></div>
-                  <div class="preview-tag quiz">Reading</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot blue"></div>
-                  <div class="preview-text"><span>Final Essay</span><small>Dec 10, 2026 · 11:59 PM</small></div>
-                  <div class="preview-tag assign">Assignment</div>
-                </div>
-              </div>
-            </div>
           </div>
-
-          <div class="tab-panel" id="tab-algebra">
-            <div class="syllabus-header">
-              <div>
-                <h2 class="syllabus-title">Linear Algebra</h2>
-                <p class="syllabus-code">MATH 2130 · Fall 2026</p>
-              </div>
-              <div class="preview-tag quiz">6 Quizzes</div>
-            </div>
-            <div class="syllabus-meta">
-              <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Dr. Priya Nair</span></div>
-              <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">MWF 2:00 – 2:50 PM</span></div>
-              <div class="meta-item"><span class="meta-label">Room</span><span class="meta-value">ECCR 150</span></div>
-            </div>
-            <div class="event-list-label">Upcoming Deadlines</div>
-            <div class="preview-card">
-              <div class="preview-body">
-                <div class="preview-row">
-                  <div class="preview-dot gold"></div>
-                  <div class="preview-text"><span>Quiz 4 - Eigenvalues</span><small>Oct 18, 2026 · 2:00 PM</small></div>
-                  <div class="preview-tag quiz">Quiz</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot blue"></div>
-                  <div class="preview-text"><span>Homework 7 - Vector Spaces</span><small>Oct 24, 2026 · 11:59 PM</small></div>
-                  <div class="preview-tag assign">Assignment</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot gold"></div>
-                  <div class="preview-text"><span>Quiz 5 - Linear Transformations</span><small>Nov 1, 2026 · 2:00 PM</small></div>
-                  <div class="preview-tag quiz">Quiz</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot red"></div>
-                  <div class="preview-text"><span>Midterm Exam</span><small>Nov 8, 2026 · 2:00 PM</small></div>
-                  <div class="preview-tag exam">Exam</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Data Visualization -->
-          <div class="tab-panel" id="tab-dataviz">
-            <div class="syllabus-header">
-              <div>
-                <h2 class="syllabus-title">Data Visualization</h2>
-                <p class="syllabus-code">INFO 4602 · Fall 2026</p>
-              </div>
-              <div class="preview-tag proj">3 Projects</div>
-            </div>
-            <div class="syllabus-meta">
-              <div class="meta-item"><span class="meta-label">Professor</span><span class="meta-value">Prof. Danielle Szafir</span></div>
-              <div class="meta-item"><span class="meta-label">Schedule</span><span class="meta-value">TR 2:00 – 3:15 PM</span></div>
-              <div class="meta-item"><span class="meta-label">Room</span><span class="meta-value">ATLAS 100</span></div>
-            </div>
-            <div class="event-list-label">Upcoming Deadlines</div>
-            <div class="preview-card">
-              <div class="preview-body">
-                <div class="preview-row">
-                  <div class="preview-dot terra"></div>
-                  <div class="preview-text"><span>Group Project Checkpoint</span><small>Oct 21, 2026 · 5:00 PM</small></div>
-                  <div class="preview-tag proj">Project</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot blue"></div>
-                  <div class="preview-text"><span>Design Critique Write-up</span><small>Oct 29, 2026 · 11:59 PM</small></div>
-                  <div class="preview-tag assign">Assignment</div>
-                </div>
-                <div class="preview-row">
-                  <div class="preview-dot terra"></div>
-                  <div class="preview-text"><span>Final Project - Interactive Dashboard</span><small>Dec 12, 2026 · 5:00 PM</small></div>
-                  <div class="preview-tag proj">Project</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          {{/each}}
         </div>
       </div>
-    </div>
 
+      {{else}}
+      <div style="padding: 2rem; text-align: center; color: var(--text-muted, #888);">
+        <p>No syllabi uploaded yet. Upload a syllabus to get started.</p>
+      </div>
+      {{/if}}
+
+    </div>
   </div>
 </div>
+
+{{#if hasClasses}}
+<!-- ── Floating Add Assignment Button ── -->
+<button class="fab-add" id="fabAdd" title="Add assignment">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  </svg>
+</button>
+{{/if}}
+
+<!-- ── Assignment Modal (shared for add + edit) ── -->
+<div class="modal-backdrop" id="assignmentModalBackdrop">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="assignmentModalTitle">Add Assignment</span>
+      <button class="modal-close" id="assignmentModalClose">&times;</button>
+    </div>
+    <form id="assignmentForm" class="modal-body">
+      <input type="hidden" id="asgAssignmentID">
+      <input type="hidden" id="asgClassID">
+
+      <div class="modal-field">
+        <label class="modal-label" for="asgName">Title</label>
+        <input class="modal-input" type="text" id="asgName" placeholder="e.g. Midterm Exam" required>
+      </div>
+
+      <div class="modal-row">
+        <div class="modal-field">
+          <label class="modal-label" for="asgDate">Due Date</label>
+          <input class="modal-input" type="date" id="asgDate">
+        </div>
+        <div class="modal-field">
+          <label class="modal-label" for="asgTime">Due Time</label>
+          <input class="modal-input" type="time" id="asgTime">
+        </div>
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label" for="asgType">Type</label>
+        <select class="modal-input modal-select" id="asgType">
+          <option value="Assignment">Assignment</option>
+          <option value="Exam">Exam</option>
+          <option value="Project">Project</option>
+          <option value="Lab">Lab</option>
+        </select>
+      </div>
+
+      <div class="modal-error" id="asgError"></div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-danger" id="asgDeleteBtn" style="display:none;margin-right:auto;">Delete</button>
+        <button type="button" class="btn-ghost" id="asgCancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary-custom" id="asgSubmitBtn">Add Assignment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Edit Class Modal ── -->
+<div class="modal-backdrop" id="editModalBackdrop">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">Edit Class</span>
+      <button class="modal-close" id="editModalClose">&times;</button>
+    </div>
+    <form id="editClassForm" class="modal-body">
+      <input type="hidden" id="editClassID">
+      <div class="modal-field">
+        <label class="modal-label" for="editClassName">Class Name</label>
+        <input class="modal-input" type="text" id="editClassName" required>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label" for="editClassCode">Class Code</label>
+        <input class="modal-input" type="text" id="editClassCode">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label" for="editTerm">Term</label>
+        <input class="modal-input" type="text" id="editTerm">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label" for="editProfessor">Professor</label>
+        <input class="modal-input" type="text" id="editProfessor">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label" for="editTextbook">Textbook</label>
+        <input class="modal-input" type="text" id="editTextbook">
+      </div>
+      <div class="modal-error" id="editError"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" id="editCancelBtn">Cancel</button>
+        <button type="submit" class="btn-primary-custom">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Remove Class Modal ── -->
+<div class="modal-backdrop" id="removeModalBackdrop">
+  <div class="modal-box modal-box--sm">
+    <div class="modal-header">
+      <span class="modal-title">Remove Class</span>
+      <button class="modal-close" id="removeModalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-confirm-text">Remove <strong id="removeClassName"></strong> from your profile? This cannot be undone.</p>
+      <div class="modal-error" id="removeError"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" id="removeCancelBtn">Cancel</button>
+        <button type="button" class="btn-danger" id="removeConfirmBtn">Remove Class</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="/assets/js/syllabi.js"></script>
