@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
     userID SERIAL PRIMARY KEY,
     username VARCHAR(15) NOT NULL UNIQUE,
     email VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(60) NOT NULL
-    --Add any settings saved for individual users
+    password VARCHAR(60) NOT NULL,
+    ai_provider INT NOT NULL DEFAULT 1 -- 0 = Google Gemini, 1 = Qwen
 );
 
 CREATE TABLE IF NOT EXISTS classes (
@@ -44,9 +44,10 @@ CREATE TABLE IF NOT EXISTS assignments (
     classID INT NOT NULL,
     name VARCHAR(50) NOT NULL,
     type VARCHAR(10) NOT NULL,
-    dueDate DATE NOT NULL,
-    dueTime TIME NOT NULL,
-    location VARCHAR(50), -- for in person exams and tests only
+    repeat BOOLEAN NOT NULL DEFAULT FALSE,
+    dueDate DATE,
+    dueTime TIME NOT NULL DEFAULT '23:59:00',
+    location VARCHAR(1000), -- for in person exams and tests only
     userID INT, --can be null, potentially used for assignments created manually by specific users, something we dont want to share to other users
     FOREIGN KEY (classID) REFERENCES classes(classID),
     FOREIGN KEY (userID) REFERENCES users(userID)

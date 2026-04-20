@@ -14,6 +14,7 @@ const { error } = require('console');
 const multer = require('multer'); // to properly handle file uploads in our server. 
 const upload = multer({ storage: multer.memoryStorage() }) //specifies that we want the uploaded files to be stored in memory for processing
 const { GoogleGenAI } = require('@google/genai'); // to interact with the Gemini API.
+const { OpenAI, toFile } = require('openai'); // to interact with Qwen via Alibaba Cloud DashScope.
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -66,8 +67,13 @@ app.use(
     resave: false,
   })
 );
-// initialize the google gemini client 
+// initialize the google gemini client
 const gemini = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
+// initialize the Qwen client via Alibaba Cloud DashScope (OpenAI-compatible)
+const qwenClient = new OpenAI({
+  apiKey: process.env.QWEN_API_KEY,
+  baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+});
 
 app.use(
   bodyParser.urlencoded({
@@ -103,10 +109,7 @@ app.post('/register', async (req, res) => {
     res.redirect('/login');
   } catch (error) {
     console.error('Error during registration: ', error);
-    res.status(400).render('./pages/register', {
-      error: 'Registration failed.',
-      user: req.session.user
-    });
+    res.status(400).json({ message: 'Invalid input' });
   }
 });
 
@@ -350,8 +353,8 @@ app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res
     return res.status(200).json({ status: 'success', message: 'File uploaded successfully' });
   }
   //return res.status(200).json({ status: 'success', message: 'File uploaded successfully' });
-  // Now we may process file. 
-  // For now there is just one api, but down the line we should expand this to other services if one api hits rate limit
+  // Now we may process file.
+  // ai_provider: 0 = Google Gemini, 1 = Qwen (default)
   const prompt = `Analize the given syllabus and extract the following information in the json format specified:
   {
   "professor": "Professor Name",
@@ -428,36 +431,72 @@ app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res
   ]
 }
 When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for all dates with a single assignment, and for repeating assignments use the day of the week (M,T,W,Th,F). For repeating assignments with multiple due days, concatenate the days together (e.g. MW for assignments due on both Monday and Wednesday). If time is not specified for an assignment, return null for the time field. If there are no textbooks listed in the syllabus, return null for the textbooks field. Make sure to only extract information that is explicitly stated in the syllabus and do not make any assumptions or inferences. Adhere strictly to the given json format, if there is no data for a specific section, make the value null`;
-  let response;
-  try {
-    response = await gemini.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          parts: [
-            {
-              text: prompt
-            },
-            {
-              inlineData: {
-                mimeType: 'application/pdf',
-                data: req.file.buffer.toString('base64')
+
+  const aiProvider = req.session.user.ai_provider ?? 1;
+  let parcedResponse;
+
+  if (aiProvider === 0) {
+    // --- Google Gemini ---
+    let response;
+    try {
+      response = await gemini.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  mimeType: 'application/pdf',
+                  data: req.file.buffer.toString('base64')
+                },
               },
-            },
-          ]
+            ]
+          },
+        ],
+        config: {
+          responseMimeType: 'application/json',
         },
-      ],
-      config: {
-        responseMimeType: 'application/json',
-      },
-    });
-  } catch (err) {
-    console.error('Error calling Gemini API:', err);
-    return res.status(500).json({ error: 'An error occurred while processing the syllabus. Please try again later.' });
+      });
+    } catch (err) {
+      console.error('Error calling Gemini API:', err);
+      return res.status(500).json({ error: 'An error occurred while processing the syllabus. Please try again later.' });
+    }
+    const data = JSON.parse(response.text);
+    parcedResponse = Array.isArray(data) ? data[0] : data;
+    console.log('Parsed response from Gemini API:', parcedResponse);
+  } else {
+    // --- Qwen via Alibaba Cloud DashScope (OpenAI-compatible) ---
+    let uploadedFile;
+    try {
+      uploadedFile = await qwenClient.files.create({
+        file: await toFile(req.file.buffer, req.file.originalname, { type: 'application/pdf' }),
+        purpose: 'file-extract',
+      });
+    } catch (err) {
+      console.error('Error uploading file to Qwen API:', err);
+      return res.status(500).json({ error: 'An error occurred while uploading the syllabus for processing. Please try again later.' });
+    }
+
+    let completion;
+    try {
+      completion = await qwenClient.chat.completions.create({
+        model: 'qwen3.5-flash',
+        messages: [
+          { role: 'system', content: `fileid://${uploadedFile.id}` },
+          { role: 'user', content: prompt },
+        ],
+        response_format: { type: 'json_object' },
+      });
+    } catch (err) {
+      console.error('Error calling Qwen API:', err);
+      return res.status(500).json({ error: 'An error occurred while processing the syllabus. Please try again later.' });
+    }
+
+    const data = JSON.parse(completion.choices[0].message.content);
+    parcedResponse = Array.isArray(data) ? data[0] : data;
+    console.log('Parsed response from Qwen API:', parcedResponse);
   }
-  const data = JSON.parse(response.text);
-  const parcedResponse = Array.isArray(data) ? data[0] : data;
-  console.log('Parsed response from Gemini API:', parcedResponse);
   // For now we just return the parsed response, but down the line we will want to insert this info into our database and link it to the user that uploaded it.
   const professor = parcedResponse.professor;
   const className = parcedResponse.class_name;
@@ -537,36 +576,19 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
               const type = assignment.type;
               const repeat = assignment.repeat;
               const time = parseTime(assignment.time);
-              let dueDayInts;
               if (repeat) {
                 const dueDayStr = assignment.due_date;
                 if (!dueDayStr) {
                   console.warn('Repeating assignment missing due_date, skipping:', assignmentName);
-                  if (term.toLowerCase().includes('spring')) {
-                    dates = { startDate: `${new Date().getFullYear()}/01/01`, endDate: `${new Date().getFullYear()}/05/31` };
-                  } else if (term.toLowerCase().includes('summer')) {
-                    dates = { startDate: `${new Date().getFullYear()}/06/01`, endDate: `${new Date().getFullYear()}/08/31` };
-                  } else if (term.toLowerCase().includes('fall')) {
-                    dates = { startDate: `${new Date().getFullYear()}/09/01`, endDate: `${new Date().getFullYear()}/12/31` };
-                  } else {
-                    if (new Date().getMonth() < 5) {
-                      dates = { startDate: `${new Date().getFullYear()}/01/01`, endDate: `${new Date().getFullYear()}/05/31` };
-                    } else if (new Date().getMonth() < 8) {
-                      dates = { startDate: `${new Date().getFullYear()}/06/01`, endDate: `${new Date().getFullYear()}/08/31` };
-                    } else {
-                      dates = { startDate: `${new Date().getFullYear()}/09/01`, endDate: `${new Date().getFullYear()}/12/31` };
-                    }
-                  }
+                  continue;
                 }
-                else{
-                  dueDayInts = parseDayString(dueDayStr);
-                }
+                const dueDayInts = parseDayString(dueDayStr);
                 for (const dayInt of dueDayInts) {
                   const occurances = getOccurrencesOfDay(dayInt, dates.startDate, dates.endDate);
                   for(const occurence of occurances) {
                       const dueDate = occurence;
                       try {
-                        await db.none('INSERT INTO assignments(name, type, repeat, dueDate, dueTime) VALUES($1, $2, $3, $4, $5)', [assignmentName, type, repeat, dueDate, time]);
+                        await db.none('INSERT INTO assignments(classID, name, type, repeat, dueDate, dueTime) VALUES($1, $2, $3, $4, $5, $6)', [newClassID.classid, assignmentName, type, repeat, dueDate, time]);
                         console.log(`Added repeating assignment ${assignmentName} for class ${newClassID.classid} on day ${dueDate}`); 
                       }
                       catch (err) {
@@ -578,7 +600,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
               } else {
                 const dueDate = assignment.due_date;
                 try {
-                  await db.none('INSERT INTO assignments(name, type, repeat, dueDate, dueTime) VALUES($1, $2, $3, $4, $5)', [assignmentName, type, repeat, dueDate, time]);
+                  await db.none('INSERT INTO assignments(classID, name, type, repeat, dueDate, dueTime) VALUES($1, $2, $3, $4, $5, $6)', [newClassID.classid, assignmentName, type, repeat, dueDate, time]);
                   console.log(`Added one-time assignment ${assignmentName} for class ${newClassID.classid} due on ${dueDate}`);
                 }
                 catch (err) {
@@ -597,7 +619,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
       }
     }
   } catch (err) {
-    console.error('GEMINI API ERROR!');
+    console.error('DB INSERTION ERROR!');
     res.status(400).json({ status: 'error', message: err.message });
   }
   return res.status(200).json({ status: 'success', message: 'File uploaded and processed successfully'});
