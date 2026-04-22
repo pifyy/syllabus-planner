@@ -25,11 +25,11 @@ CREATE TABLE IF NOT EXISTS meet_times (
     dayOfTheWeek INT NOT NULL,
     type VARCHAR(3) NOT NULL,-- REC/LEC/LAB/OFH (office hours)
     startTime TIME NOT NULL,
-    endTime TIME NOT NULL,
-    startDate DATE NOT NULL,
-    endDate DATE NOT NULL,
+    endTime TIME,
+    startDate DATE,
+    endDate DATE,
     location VARCHAR(40) NOT NULL,-- For CU specifically ECCS 121 for example
-    remote BOOLEAN NOT NULL -- for online classes
+    remote BOOLEAN -- for online classes
 );
 
 CREATE TABLE IF NOT EXISTS students_to_classes (

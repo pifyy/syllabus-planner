@@ -126,7 +126,7 @@ app.post('/login', async (req, res) => {
     if (user && await bcrypt.compare(password, user.password)) {
       req.session.user = user;
       req.session.save(() => {
-        res.redirect('/dashboard');
+        res.redirect('/calendar');
       });
     } else {
       res.render('./pages/login', { error: 'Invalid username or password' });
