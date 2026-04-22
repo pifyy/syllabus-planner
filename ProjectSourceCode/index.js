@@ -293,8 +293,92 @@ app.get('/syllabi', auth, async (req, res) => {
   }
 });
 
-app.get('/officehours', auth, (req, res) => {
-  res.render('./pages/officehours', { user: req.session.user });
+app.get('/officehours', auth, async (req, res) => {
+  try {
+    const uid = req.session.user.userid;
+
+    // All classes the user is enrolled in
+    const classRows = await db.any(`
+      SELECT c.classID, c.className, c.classCode, c.term, c.professor, c.email
+      FROM students_to_classes sc
+      JOIN classes c ON sc.classID = c.classID
+      WHERE sc.userID = $1
+      ORDER BY c.className
+    `, [uid]);
+
+    if (classRows.length === 0) {
+      return res.render('./pages/officehours', { user: req.session.user, classes: [], hasClasses: false });
+    }
+
+    const classIDs = classRows.map(r => r.classid);
+
+    // Fetch OFH and LEC meet times for all enrolled classes in one query
+    const meetRows = await db.any(`
+      SELECT mt.classID, mt.dayOfTheWeek, mt.type,
+             mt.startTime, mt.endTime, mt.location, mt.remote
+      FROM meet_times mt
+      WHERE mt.classID = ANY($1::int[])
+        AND mt.type IN ('OFH', 'LEC')
+      ORDER BY mt.classID, mt.type, mt.dayOfTheWeek
+    `, [classIDs]);
+
+    const dayLabels = ['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'];
+
+    // "09:00" -> "9:00 AM", "14:30" -> "2:30 PM"
+    function fmt(timeStr) {
+      if (!timeStr) return '';
+      const [h, m] = timeStr.slice(0, 5).split(':').map(Number);
+      const ampm = h < 12 ? 'AM' : 'PM';
+      return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`;
+    }
+
+    // Group rows into { OFH: [], LEC: [] } per classID
+    const meetMap = {};
+    for (const r of meetRows) {
+      const cid = r.classid;
+      if (!meetMap[cid]) meetMap[cid] = { OFH: [], LEC: [] };
+      meetMap[cid][r.type].push(r);
+    }
+
+    // Collapse days sharing the same time slot into one readable string
+    function buildScheduleStr(times) {
+      if (!times || times.length === 0) return null;
+      const groups = {};
+      for (const t of times) {
+        const key = `${t.starttime}-${t.endtime}`;
+        if (!groups[key]) {
+          groups[key] = { days: [], start: t.starttime, end: t.endtime, location: t.location, remote: t.remote };
+        }
+        groups[key].days.push(dayLabels[t.dayoftheweek]);
+      }
+      return Object.values(groups)
+        .map(g => `${g.days.join('')} ${fmt(g.start)} – ${fmt(g.end)}`)
+        .join(', ');
+    }
+
+    const classes = classRows.map((row, i) => {
+      const times  = meetMap[row.classid] || { OFH: [], LEC: [] };
+      const firstOH = times.OFH[0];
+      return {
+        classID:     row.classid,
+        className:   row.classname,
+        classCode:   row.classcode || '',
+        term:        row.term      || '',
+        professor:   row.professor,
+        email:       row.email     || '',
+        ohStr:       buildScheduleStr(times.OFH),
+        ohLocation:  firstOH ? firstOH.location : null,
+        ohRemote:    firstOH ? firstOH.remote   : false,
+        scheduleStr: buildScheduleStr(times.LEC),
+        isFirst:     i === 0,
+      };
+    });
+
+    res.render('./pages/officehours', { user: req.session.user, classes, hasClasses: true });
+  } catch (err) {
+    console.error('OFFICEHOURS ERROR:', err);
+    res.render('./pages/officehours', { user: req.session.user, classes: [], hasClasses: false });
+  }
 });
 
 app.get('/settings', auth, (req, res) => {

@@ -1331,29 +1331,86 @@ body {
 }
 
 .oh-class-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   padding: 12px 16px;
   border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
   color: var(--text-muted);
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   transition: all 0.2s;
 }
 
+.oh-class-name {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.oh-class-code {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
 .oh-class-btn:hover {
-  background: rgba(255,255,255,0.07);
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
   color: var(--text-primary);
 }
 
 .oh-class-btn.active {
-  background: rgba(212,121,90,0.15);
+  background: rgba(212,121,90,0.12);
   border-color: rgba(212,121,90,0.4);
-  color: var(--terracotta);
 }
+
+.oh-class-btn.active .oh-class-name { color: var(--terracotta); }
+.oh-class-btn.active .oh-class-code { color: var(--terracotta-light); opacity: 0.7; }
 
 .oh-panel { display: none; }
 .oh-panel.active { display: block; }
+
+.oh-remote-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(90,158,120,0.15);
+  color: var(--sage);
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.oh-email-link {
+  color: var(--deep-blue);
+  text-decoration: none;
+}
+
+.oh-email-link:hover {
+  color: var(--terracotta);
+  text-decoration: underline;
+}
+
+.oh-no-hours {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.oh-empty-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 12px 4px;
+}
 
 .dash-upload-prompt {
   display: flex;
