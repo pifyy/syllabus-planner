@@ -318,7 +318,7 @@ app.get('/officehours', auth, async (req, res) => {
              mt.startTime, mt.endTime, mt.location, mt.remote
       FROM meet_times mt
       WHERE mt.classID = ANY($1::int[])
-        AND mt.type IN ('OFH', 'LEC')
+        AND mt.type IN ('OFH')
       ORDER BY mt.classID, mt.type, mt.dayOfTheWeek
     `, [classIDs]);
 
@@ -608,14 +608,17 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
     parcedResponse = Array.isArray(data) ? data[0] : data;
     console.log('Parsed response from Qwen API:', parcedResponse);
   }
-  // For now we just return the parsed response, but down the line we will want to insert this info into our database and link it to the user that uploaded it.
+  //This is where we insert the response into the database
   const professor = parcedResponse.professor;
   const className = parcedResponse.class_name;
   const classCode = parcedResponse.class_code;
   const term = parcedResponse.term;
   const textbook = parcedResponse.textbooks;
   const uid = req.session.user.userid;
+  const officeHours = parcedResponse.office_hours || [];
   const dayOrder = ['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'];
+  const createdClassIDs = [];
+  //first make sure class doesnt already exist in the database. Avoids duplicates. 
   try {
     const existingClassID = await db.any('SELECT classID FROM classes WHERE professor = $1 AND className = $2 AND classCode = $3 AND term = $4', [professor, className, classCode, term]);
     if(existingClassID[1]) {
@@ -623,6 +626,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
       for (const classObj of existingClassID) {
         try{
           await db.none ('INSERT INTO students_to_classes(classID, userID) VALUES($1, $2)', [classObj.classid, uid]);
+          createdClassIDs.push(classObj.classid);
           console.log('Enrolled in class with ID:', classObj.classid);
         }
         catch (err) {
@@ -640,6 +644,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
           const newClassID = await db.one('INSERT INTO classes(className, term, section, professor, classCode, textbook) VALUES($1, $2, $3, $4, $5, $6) RETURNING classID', [className, term, section.section, professor, classCode, textbook]);
           console.log('Created class with ID:', newClassID);
           await db.none('INSERT INTO students_to_classes(classID, userID) VALUES($1, $2)', [newClassID.classid, uid]);
+          createdClassIDs.push(newClassID.classid);
           console.log('Enrolled in class with ID:', newClassID);
           //adding meeting times for section
           for (const meetTime of section.meeting_times) {
@@ -728,12 +733,35 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
         }
       } 
       }
+      //we start with the office hours since they are not section specific. 
+      for (const oh of officeHours) {
+        const dayStr = oh.day;
+        const dayInts = parseDayString(dayStr);
+        const timeRange = parseTimeRange(oh.time);
+        const location = oh.location || 'TBD';
+        const remote = oh.remote || false;
+        const query = 'INSERT INTO meet_times(classID, dayOfTheWeek, type, startTime, endTime, location, remote) VALUES($1, $2, $3, $4, $5, $6, $7)';
+        for (const classID of createdClassIDs) {
+          for (const dayInt of dayInts) {
+            try{
+              await db.none(query, [classID, dayInt, "OFH", timeRange.startTime, timeRange.endTime, location, remote]);
+              console.log(`Added office hour meet time for class ${classID} on day ${dayInt}`);
+            }
+            catch (err) {
+              console.error('Error adding office hour meet time:', err);
+              return res.status(500).json({ error: 'An error occurred while adding office hours. Please try again later.' });
+            }
+          }
+        }
+      }
     }
   } catch (err) {
     console.error('DB INSERTION ERROR!');
     res.status(400).json({ status: 'error', message: err.message });
   }
+  
   return res.status(200).json({ status: 'success', message: 'File uploaded and processed successfully'});
+
 });
 
 // Create a new assignment
@@ -819,9 +847,9 @@ app.put('/syllabi/class/:classID', auth, async (req, res) => {
     const uid = req.session.user.userid;
     const classID = parseInt(req.params.classID);
     const { className, classCode, term, professor, textbook } = req.body;
-
+    const query = 'SELECT 1 FROM students_to_classes WHERE classID = $1 AND userID = $2';
     const enrollment = await db.oneOrNone(
-      'SELECT 1 FROM students_to_classes WHERE classID = $1 AND userID = $2',
+      query,
       [classID, uid]
     );
     if (!enrollment) return res.status(403).json({ error: 'Not enrolled in this class' });
@@ -838,7 +866,7 @@ app.put('/syllabi/class/:classID', auth, async (req, res) => {
   }
 });
 
-// Remove class from user profile (unenroll — does not delete the class record itself)
+// Remove class from user profile. doesnt delete the class just unlinks the user from the class.
 app.delete('/syllabi/class/:classID', auth, async (req, res) => {
   try {
     const uid = req.session.user.userid;
