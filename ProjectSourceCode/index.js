@@ -95,8 +95,47 @@ app.get('/register', (req, res) => {
   res.render('./pages/register', { user: req.session.user });
 });
 
-app.get('/calendar', (req, res) => {
-  res.render('./pages/calendar', { user: req.session.user });
+app.get('/calendar', auth, async (req, res) => {
+  try {
+    const uid = req.session.user.userid;
+    const typeMap = { Exam: 'EXAM', Quiz: 'QUIZ', Assignment: 'HW', Project: 'PROJ', Lab: 'LAB' };
+
+    const [rows, countRow] = await Promise.all([
+      db.any(`
+        SELECT a.name, a.type, a.dueDate, a.dueTime
+        FROM assignments a
+        JOIN students_to_classes sc ON sc.classID = a.classID
+        WHERE sc.userID = $1 AND a.dueDate IS NOT NULL
+        ORDER BY a.dueDate, a.dueTime
+      `, [uid]),
+      db.one('SELECT COUNT(DISTINCT classID) AS count FROM students_to_classes WHERE userID = $1', [uid])
+    ]);
+
+    const events = {};
+    for (const row of rows) {
+      const d = row.duedate;
+      const dateKey = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+      if (!events[dateKey]) events[dateKey] = [];
+      events[dateKey].push({
+        title: row.name,
+        type:  typeMap[row.type] || 'HW',
+        time:  row.duetime ? row.duetime.slice(0, 5) : null
+      });
+    }
+
+    res.render('./pages/calendar', {
+      user:         req.session.user,
+      eventsJson:   JSON.stringify(events),
+      totalClasses: parseInt(countRow.count) || 1
+    });
+  } catch (err) {
+    console.error('CALENDAR ERROR:', err);
+    res.render('./pages/calendar', {
+      user:         req.session.user,
+      eventsJson:   '{}',
+      totalClasses: 1
+    });
+  }
 });
 
 app.post('/register', async (req, res) => {
@@ -108,8 +147,9 @@ app.post('/register', async (req, res) => {
 
     res.redirect('/login');
   } catch (error) {
-    console.error('Error during registration: ', error);
-    res.status(400).json({ message: 'Invalid input' });
+    console.error(error, 'Error during registration: ');
+    //this sends the user a nice message letting them know the registration failed instead of an ugly page
+    res.render('./pages/register', { error: 'An error occurred during registration. Please try again.' });
   }
 });
 
@@ -126,7 +166,7 @@ app.post('/login', async (req, res) => {
     if (user && await bcrypt.compare(password, user.password)) {
       req.session.user = user;
       req.session.save(() => {
-        res.redirect('/calendar');
+        res.redirect('/syllabi');
       });
     } else {
       res.render('./pages/login', { error: 'Invalid username or password' });
@@ -297,8 +337,80 @@ app.get('/syllabi', auth, async (req, res) => {
   }
 });
 
-app.get('/officehours', auth, (req, res) => {
-  res.render('./pages/officehours', { user: req.session.user });
+app.get('/officehours', auth, async (req, res) => {
+  try {
+    const uid = req.session.user.userid;
+
+    const rows = await db.any(`
+      SELECT
+        c.classID, c.className, c.classCode, c.term, c.professor,
+        mt.dayOfTheWeek, mt.startTime, mt.endTime, mt.location, mt.remote
+      FROM students_to_classes sc
+      JOIN classes c ON sc.classID = c.classID
+      LEFT JOIN meet_times mt ON mt.classID = c.classID AND mt.type = 'OFH'
+      WHERE sc.userID = $1
+      ORDER BY c.classID, mt.dayOfTheWeek
+    `, [uid]);
+
+    const dayLabels = ['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'];
+    const classMap = {};
+
+    for (const row of rows) {
+      if (!classMap[row.classid]) {
+        classMap[row.classid] = {
+          classID:     row.classid,
+          slug:        `class-${row.classid}`,
+          className:   row.classname,
+          classCode:   row.classcode,
+          term:        row.term,
+          professor:   row.professor,
+          officeHours: []
+        };
+      }
+      if (row.dayoftheweek !== null) {
+        classMap[row.classid].officeHours.push({
+          dayLabel:  dayLabels[row.dayoftheweek],
+          startTime: row.starttime ? row.starttime.slice(0, 5) : '',
+          endTime:   row.endtime   ? row.endtime.slice(0, 5)   : '',
+          location:  row.location  || 'TBD',
+          remote:    row.remote
+        });
+      }
+    }
+
+    // Build a condensed office hours string per class
+    for (const cls of Object.values(classMap)) {
+      if (cls.officeHours.length > 0) {
+        const timeGroups = {};
+        for (const oh of cls.officeHours) {
+          const key = `${oh.startTime}-${oh.endTime}-${oh.location}`;
+          if (!timeGroups[key]) timeGroups[key] = { days: [], startTime: oh.startTime, endTime: oh.endTime, location: oh.location, remote: oh.remote };
+          timeGroups[key].days.push(oh.dayLabel);
+        }
+        cls.ohStr = Object.values(timeGroups)
+          .map(g => `${g.days.join('')} ${g.startTime}–${g.endTime} (${g.location})`)
+          .join(', ');
+      } else {
+        cls.ohStr = 'No office hours listed';
+      }
+    }
+
+    const classes = Object.values(classMap);
+    if (classes.length > 0) classes[0].isFirst = true;
+
+    res.render('./pages/officehours', {
+      user: req.session.user,
+      classes,
+      hasClasses: classes.length > 0
+    });
+  } catch (err) {
+    console.error('OFFICE HOURS ERROR:', err);
+    res.render('./pages/officehours', {
+      user: req.session.user,
+      classes: [],
+      hasClasses: false
+    });
+  }
 });
 
 app.get('/settings', auth, (req, res) => {
@@ -317,10 +429,16 @@ function parseDayString(dayStr) {
   return tokens.map(d => map[d]).filter(n => n !== undefined);
 }
 
-// Parse "HH:MM-HH:MM" into { startTime, endTime } with seconds appended
+/// Parse time strings into { startTime, endTime } with seconds appended.
+// Handles "HH:MM-HH:MM", "before HH:MM", and "after HH:MM".
 function parseTimeRange(timeStr) {
+  if (!timeStr) return { startTime: '00:00:00', endTime: null };
+  const before = timeStr.match(/before\s+(\d{1,2}:\d{2})/i);
+  if (before) return { startTime: '00:00:00', endTime: before[1] + ':00' };
+  const after = timeStr.match(/after\s+(\d{1,2}:\d{2})/i);
+  if (after) return { startTime: after[1] + ':00', endTime: null };
   const [start, end] = timeStr.split('-');
-  return { startTime: start.trim() + ':00', endTime: end.trim() + ':00' };
+  return { startTime: start.trim() + ':00', endTime: end ? end.trim() + ':00' : null };
 }
 
 // Parse "YYYY-MM-DD - YYYY-MM-DD" into { startDate, endDate }
@@ -442,7 +560,7 @@ app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res
 }
 When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for all dates with a single assignment, and for repeating assignments use the day of the week (M,T,W,Th,F). For repeating assignments with multiple due days, concatenate the days together (e.g. MW for assignments due on both Monday and Wednesday). If time is not specified for an assignment, return null for the time field. If there are no textbooks listed in the syllabus, return null for the textbooks field. Make sure to only extract information that is explicitly stated in the syllabus and do not make any assumptions or inferences. Adhere strictly to the given json format, if there is no data for a specific section, make the value null. Assignment types should be only "Exam", "Quiz", "Assignment", or "Project".`;
 
-  const aiProvider = req.session.user.ai_provider ?? 1;
+  const aiProvider = req.body.ai_provider !== undefined ? parseInt(req.body.ai_provider) : (req.session.user.ai_provider ?? 1);
   let parcedResponse;
 
   if (aiProvider === 0) {
@@ -525,14 +643,17 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
   const term = parcedResponse.term;
   const textbook = parcedResponse.textbooks;
   const uid = req.session.user.userid;
+  const officeHours = parcedResponse.office_hours || [];
+  const createdClassIDs = [];
   const dayOrder = ['Su', 'M', 'T', 'W', 'Th', 'F', 'Sa'];
   try {
     const existingClassID = await db.any('SELECT classID FROM classes WHERE professor = $1 AND className = $2 AND classCode = $3 AND term = $4', [professor, className, classCode, term]);
     if(existingClassID[1]) {
-      //for loop because we upload all sections to the database. We enroll the student in all sections, and they can opt out of the ones they arent in. not very elagent but will be fixed. 
+      //for loop because we upload all sections to the database. We enroll the student in all sections, and they can opt out of the ones they arent in. not very elagent but will be fixed.
       for (const classObj of existingClassID) {
         try{
           await db.none ('INSERT INTO students_to_classes(classID, userID) VALUES($1, $2)', [classObj.classid, uid]);
+          createdClassIDs.push(classObj.classid);
           console.log('Enrolled in class with ID:', classObj.classid);
         }
         catch (err) {
@@ -550,6 +671,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
           const newClassID = await db.one('INSERT INTO classes(className, term, section, professor, classCode, textbook) VALUES($1, $2, $3, $4, $5, $6) RETURNING classID', [className, term, section.section, professor, classCode, textbook]);
           console.log('Created class with ID:', newClassID);
           await db.none('INSERT INTO students_to_classes(classID, userID) VALUES($1, $2)', [newClassID.classid, uid]);
+          createdClassIDs.push(newClassID.classid);
           console.log('Enrolled in class with ID:', newClassID);
           //adding meeting times for section
           for (const meetTime of section.meeting_times) {
@@ -595,7 +717,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
             for (const assignment of section.assignments) {
               const assignmentName = assignment.assignment;
               const type = assignment.type;
-              const repeat = assignment.repeat;
+              const repeat = assignment.repeat == true || String(assignment.repeat).toLowerCase() == 'true';
               const time = parseTime(assignment.time);
               if (repeat) {
                 const dueDayStr = assignment.due_date;
@@ -636,14 +758,33 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
           console.error('Error creating class and enrolling:', err);
           return res.status(500).json({ error: 'An error occurred while creating the class and enrolling. Please try again later.' });
         }
-      } 
+      }
+      }
+      // add office hours for every created class (not section-specific)
+      for (const oh of officeHours) {
+        const dayInts = parseDayString(oh.day);
+        const timeRange = parseTimeRange(oh.time);
+        const location = oh.location || 'TBD';
+        const remote = oh.remote || false;
+        const ohQuery = 'INSERT INTO meet_times(classID, dayOfTheWeek, type, startTime, endTime, location, remote) VALUES($1, $2, $3, $4, $5, $6, $7)';
+        for (const classID of createdClassIDs) {
+          for (const dayInt of dayInts) {
+            try {
+              await db.none(ohQuery, [classID, dayInt, 'OFH', timeRange.startTime, timeRange.endTime, location, remote]);
+              console.log(`Added office hour for class ${classID} on day ${dayInt}`);
+            } catch (err) {
+              console.error('Error adding office hour:', err);
+              return res.status(500).json({ error: 'An error occurred while adding office hours. Please try again later.' });
+            }
+          }
+        }
       }
     }
+    return res.status(200).json({ status: 'success', message: 'File uploaded and processed successfully'});
   } catch (err) {
     console.error('DB INSERTION ERROR!');
-    res.status(400).json({ status: 'error', message: err.message });
+    return res.status(400).json({ status: 'error', message: err.message });
   }
-  return res.status(200).json({ status: 'success', message: 'File uploaded and processed successfully'});
 });
 
 // Create a new assignment

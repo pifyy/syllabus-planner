@@ -54,6 +54,7 @@ function handleFile(file) {
 
   const formData = new FormData();
   formData.append('syllabusFile', file);
+  formData.append('ai_provider', document.getElementById('aiProviderSelect').value);
 
   fetch('/syllabi/upload', { method: 'POST', body: formData })
     .then(res => res.json())

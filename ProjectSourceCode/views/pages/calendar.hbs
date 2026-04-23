@@ -21,7 +21,7 @@
       radial-gradient(circle at 75% 72%, rgba(255, 210, 70, 0.10), transparent 30%),
       linear-gradient(180deg, rgba(7,7,12,0.96) 0%, rgba(5,5,8,1) 100%);
   "></div>
- 
+
   <div class="container position-relative" style="z-index:2;">
     <div class="row g-4">
 
@@ -35,71 +35,14 @@
           padding: 28px;
           box-shadow: 0 20px 60px rgba(0,0,0,0.45);
         ">
-          <h2 class="text-light mb-4">April 2026</h2>
-
-          <!-- WEEK 1 (Easy demo) -->
-          <div id="week-1" class="mb-3 p-3" style="
-            border-radius: 18px;
-            background: linear-gradient(135deg, rgba(120,255,120,0.16), rgba(120,255,120,0.05));
-          ">
-            <div class="d-flex justify-content-between">
-              <span class="text-light">Week 1</span>
-              <span class="fw-bold week-difficulty-label" data-week="1"></span>
-            </div>
-            <div class="d-flex justify-content-between mt-2">
-              <span onclick="renderDay(30)" style="cursor:pointer; color:#ffd24d;">30</span>
-              <span onclick="renderDay(31)" style="cursor:pointer; color:#ffd24d;">31</span>
-              <span onclick="renderDay(1)"  style="cursor:pointer; color:#ffd24d;">1</span>
-              <span onclick="renderDay(2)"  style="cursor:pointer; color:#ffd24d;">2</span>
-              <span onclick="renderDay(3)"  style="cursor:pointer; color:#ffd24d;">3</span>
-              <span>4</span>
-              <span>5</span>
-            </div>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <button id="prevMonth" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0 8px;">&#8249;</button>
+            <h2 class="text-light mb-0" id="calTitle"></h2>
+            <button id="nextMonth" style="background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:0 8px;">&#8250;</button>
           </div>
-
-          <!-- WEEK 2 (Medium demo) -->
-          <div id="week-2" class="mb-3 p-3" style="
-            border-radius: 18px;
-            background: linear-gradient(135deg, rgba(255,210,70,0.22), rgba(255,210,70,0.05));
-          ">
-            <div class="d-flex justify-content-between">
-              <span class="text-light">Week 2</span>
-              <span class="fw-bold week-difficulty-label" data-week="2"></span>
-            </div>
-            <div class="d-flex justify-content-between mt-2">
-              <span class="text-muted">6</span>
-              <span class="text-muted">7</span>
-              <span onclick="renderDay(8)"  style="cursor:pointer; color:#ffd24d;">8</span>
-              <span onclick="renderDay(9)"  style="cursor:pointer; color:#ffd24d;">9</span>
-              <span onclick="renderDay(10)" style="cursor:pointer; color:#ffd24d;">10</span>
-              <span>11</span>
-              <span>12</span>
-            </div>
-          </div>
-
-          <!-- WEEK 3 (Hard demo) -->
-          <div id="week-3" class="p-3" style="
-            border-radius: 18px;
-            background: linear-gradient(135deg, rgba(255,80,80,0.22), rgba(255,80,80,0.05));
-          ">
-            <div class="d-flex justify-content-between">
-              <span class="text-light">Week 3</span>
-              <span class="fw-bold week-difficulty-label" data-week="3"></span>
-            </div>
-            <div class="d-flex justify-content-between mt-2">
-              <span onclick="renderDay(13)" style="cursor:pointer; color:#ffd24d;">13</span>
-              <span onclick="renderDay(14)" style="cursor:pointer; color:#ffd24d;">14</span>
-              <span onclick="renderDay(15)" style="cursor:pointer; color:#ffd24d;">15</span>
-              <span onclick="renderDay(16)" style="cursor:pointer; color:#ffd24d;">16</span>
-              <span onclick="renderDay(17)" style="cursor:pointer; color:#ffd24d;">17</span>
-              <span>18</span>
-              <span>19</span>
-            </div>
-          </div>
-
+          <div id="calWeeks"></div>
         </div>
       </div>
-
 
       <!-- RIGHT: DAILY VIEW -->
       <div class="col-lg-7">
@@ -111,20 +54,14 @@
           padding: 28px;
           box-shadow: 0 20px 60px rgba(0,0,0,0.45);
         ">
-
           <h2 class="text-light mb-1">Daily View</h2>
-          <div id="selected-date" style="color:#f09a74; font-weight:600;">April 9</div>
-
-          <!-- difficulty badge (day) -->
+          <div id="selected-date" style="color:#f09a74; font-weight:600;"></div>
           <div id="stress-level" class="mt-2 mb-4"></div>
-
-          <!-- timeline -->
           <div id="daily-events" style="
             border-left: 2px solid rgba(255,255,255,0.08);
             padding-left: 20px;
             transition: all 0.3s ease;
           "></div>
-
         </div>
       </div>
 
@@ -132,35 +69,12 @@
   </div>
 </div>
 
-
-
-
 <script>
-  // ---- CONFIG -------------------------------------------------------------
-  // Total classes the student is enrolled in this semester.
-  // Later this should come from user settings / the database; hardcoded for now.
-  const totalClasses = 4;
+  const totalClasses = {{totalClasses}};
+  const events = {{{eventsJson}}};
 
-  // Point values per assignment type. Single source of truth for both day & week.
-  // Must match the type codes used in the assignments table.
-  const POINTS_BY_TYPE = {
-    EXAM: 10,
-    PROJ: 6,
-    LAB:  4,
-    QUIZ: 3,
-    HW:   2
-  };
-
-  // Day difficulty thresholds (fixed scale, independent of class count).
-  const DAY_THRESHOLDS = {
-    hard:   10,  // > 10 -> Hard
-    medium: 5    // > 5  -> Medium, else Easy
-  };
-
-  // Week difficulty thresholds by number of classes enrolled.
-  // Easy:   points < easyMax
-  // Medium: easyMax <= points <= mediumMax
-  // Hard:   points > mediumMax
+  const POINTS_BY_TYPE = { EXAM: 10, PROJ: 6, LAB: 4, QUIZ: 3, HW: 2 };
+  const DAY_THRESHOLDS  = { hard: 10, medium: 5 };
   const WEEK_THRESHOLDS_BY_CLASS_COUNT = {
     1: { easyMax: 10, mediumMax: 14 },
     2: { easyMax: 13, mediumMax: 17 },
@@ -169,182 +83,147 @@
     5: { easyMax: 22, mediumMax: 26 },
     6: { easyMax: 25, mediumMax: 29 }
   };
-
-  // Shared difficulty visuals.
   const DIFFICULTY_STYLE = {
-    Easy:   { color: "#34d17b", textClass: "text-success" },
-    Medium: { color: "#ffd24d", textClass: "text-warning" },
-    Hard:   { color: "#ff4d57", textClass: "text-danger"  }
+    Easy:   { color: '#34d17b', textClass: 'text-success', bg: 'linear-gradient(135deg,rgba(120,255,120,0.16),rgba(120,255,120,0.05))' },
+    Medium: { color: '#ffd24d', textClass: 'text-warning', bg: 'linear-gradient(135deg,rgba(255,210,70,0.22),rgba(255,210,70,0.05))' },
+    Hard:   { color: '#ff4d57', textClass: 'text-danger',  bg: 'linear-gradient(135deg,rgba(255,80,80,0.22),rgba(255,80,80,0.05))' }
   };
+  const COLOR_MAP = { HW: '#2f6fff', QUIZ: '#9BFF00', EXAM: '#ff4d57', LAB: '#ffd24d', PROJ: '#c77dff' };
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  // ---- DATA ---------------------------------------------------------------
-  // Placeholder data matching the assignments table type codes.
-  // Designed so every difficulty bucket (Easy / Medium / Hard) is visible
-  // on both the week cards and the day badge.
-  // TODO: Replace with a fetch() call to a backend route once the API exists.
-  const events = {
-    // --- Week 1: total = 7 pts -> EASY week ---
-    30: [ { title: "HW 1: Git Basics",       type: "HW",   time: "11:59 PM" } ], // Easy day (2 pts)
-    31: [],                                                                       // Easy day (0 pts)
-    1:  [ { title: "HW 1: Proof Warmup",     type: "HW",   time: "11:59 PM" } ], // Easy day (2 pts)
-    2:  [],                                                                       // Easy day
-    3:  [ { title: "Quiz 1: Vectors",        type: "QUIZ", time: "10:00 AM" } ], // Easy day (3 pts)
+  const today = new Date();
+  let viewYear  = today.getFullYear();
+  let viewMonth = today.getMonth();
 
-    // --- Week 2: total = 21 pts -> MEDIUM week ---
-    8:  [
-      { title: "Lab 10: Docker Setup",       type: "LAB",  time: "11:59 PM" },
-      { title: "CSCI 3308 Homework",         type: "HW",   time: "Due Tomorrow" }
-    ], // Medium day (6 pts)
-    9:  [
-      { title: "Midterm Exam",               type: "EXAM", time: "11:00 AM" }
-    ], // Medium day (10 pts, exactly on boundary)
-    10: [
-      { title: "HW 5: Integration",          type: "HW",   time: "11:59 PM" },
-      { title: "Quiz 3: Circuits",           type: "QUIZ", time: "11:59 PM" }
-    ], // Easy day (5 pts)
-
-    // --- Week 3: total = 28 pts -> HARD week ---
-    13: [
-      { title: "HW 6: Line Integrals",       type: "HW",   time: "11:59 PM" }
-    ], // Easy day (2 pts)
-    14: [
-      { title: "Physics Midterm",            type: "EXAM", time: "10:00 AM" },
-      { title: "Algorithms Project",         type: "PROJ", time: "11:59 PM" }
-    ], // Hard day (16 pts)
-    15: [
-      { title: "Lab 11: Magnetism",          type: "LAB",  time: "02:00 PM" }
-    ], // Easy day (4 pts)
-    16: [
-      { title: "Group Project Milestone",    type: "PROJ", time: "11:59 PM" }
-    ], // Medium day (6 pts)
-    17: []  // Easy day
-  };
-
-  // Which days belong to which week. Could later be derived from actual dates.
-  // Week 1 spans March 30 - April 5 (days 30, 31 are March; 1-5 are April).
-  const weekDays = {
-    1: [30, 31, 1, 2, 3, 4, 5],
-    2: [6, 7, 8, 9, 10, 11, 12],
-    3: [13, 14, 15, 16, 17, 18, 19]
-  };
-
-  // ---- POINT CALCULATION --------------------------------------------------
-  function pointsForEvents(eventList) {
-    return eventList.reduce((sum, e) => sum + (POINTS_BY_TYPE[e.type] || 0), 0);
+  function isoKey(y, m, d) {
+    const dt = new Date(y, m, d);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
   }
 
-  function pointsForDay(day) {
-    return pointsForEvents(events[day] || []);
+  function pointsForDate(dateStr) {
+    return (events[dateStr] || []).reduce((sum, e) => sum + (POINTS_BY_TYPE[e.type] || 0), 0);
   }
 
-  function pointsForWeek(weekNum) {
-    const days = weekDays[weekNum] || [];
-    return days.reduce((sum, d) => sum + pointsForDay(d), 0);
+  function classifyDay(pts)  {
+    return pts > DAY_THRESHOLDS.hard ? 'Hard' : pts > DAY_THRESHOLDS.medium ? 'Medium' : 'Easy';
   }
 
-  // ---- DIFFICULTY CLASSIFIERS --------------------------------------------
-  function classifyDay(points) {
-    if (points > DAY_THRESHOLDS.hard)   return "Hard";
-    if (points > DAY_THRESHOLDS.medium) return "Medium";
-    return "Easy";
+  function classifyWeek(pts, n) {
+    const k = Math.min(6, Math.max(1, n));
+    const { easyMax, mediumMax } = WEEK_THRESHOLDS_BY_CLASS_COUNT[k];
+    return pts > mediumMax ? 'Hard' : pts >= easyMax ? 'Medium' : 'Easy';
   }
 
-  function classifyWeek(points, classCount) {
-    // Clamp to supported range (1–6).
-    const key = Math.min(6, Math.max(1, classCount));
-    const { easyMax, mediumMax } = WEEK_THRESHOLDS_BY_CLASS_COUNT[key];
-    if (points > mediumMax) return "Hard";
-    if (points >= easyMax)  return "Medium";
-    return "Easy";
+  function buildCalendar() {
+    document.getElementById('calTitle').textContent = monthNames[viewMonth] + ' ' + viewYear;
+
+    const firstDow    = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const prevDays    = new Date(viewYear, viewMonth, 0).getDate();
+
+    // Build flat array of calendar cells
+    const cells = [];
+    for (let i = firstDow - 1; i >= 0; i--)
+      cells.push({ day: prevDays - i, offset: -1 });
+    for (let d = 1; d <= daysInMonth; d++)
+      cells.push({ day: d, offset: 0 });
+    while (cells.length % 7)
+      cells.push({ day: cells.length - daysInMonth - firstDow + 1, offset: 1 });
+
+    const container = document.getElementById('calWeeks');
+    container.innerHTML = '';
+
+    for (let w = 0; w < cells.length / 7; w++) {
+      const week = cells.slice(w * 7, w * 7 + 7);
+
+      const weekPts = week.reduce((sum, c) => {
+        if (c.offset !== 0) return sum;
+        return sum + pointsForDate(isoKey(viewYear, viewMonth, c.day));
+      }, 0);
+      const diff  = classifyWeek(weekPts, totalClasses);
+      const style = DIFFICULTY_STYLE[diff];
+
+      const weekDiv = document.createElement('div');
+      weekDiv.className = 'mb-3 p-3';
+      weekDiv.style.cssText = `border-radius:18px; background:${style.bg};`;
+
+      const header = document.createElement('div');
+      header.className = 'd-flex justify-content-between mb-2';
+      header.innerHTML = `<span class="text-light">Week ${w + 1}</span><span class="fw-bold ${style.textClass}">${diff}</span>`;
+      weekDiv.appendChild(header);
+
+      const daysRow = document.createElement('div');
+      daysRow.className = 'd-flex justify-content-between';
+
+      week.forEach(c => {
+        const span = document.createElement('span');
+        if (c.offset !== 0) {
+          span.style.color = 'rgba(255,255,255,0.2)';
+          span.textContent = c.day;
+        } else {
+          const key       = isoKey(viewYear, viewMonth, c.day);
+          const hasEvents = !!(events[key] && events[key].length);
+          const isToday   = c.day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+
+          span.style.cursor = 'pointer';
+          span.style.color  = hasEvents ? '#ffd24d' : 'rgba(255,255,255,0.55)';
+          if (isToday) { span.style.fontWeight = 'bold'; span.style.textDecoration = 'underline'; }
+          span.textContent = c.day;
+          span.addEventListener('click', () => renderDay(key));
+        }
+        daysRow.appendChild(span);
+      });
+
+      weekDiv.appendChild(daysRow);
+      container.appendChild(weekDiv);
+    }
   }
 
-  // ---- RENDERING ----------------------------------------------------------
-  function animateContainer() {
-    const el = document.getElementById("daily-events");
-    el.style.opacity = 0;
-    el.style.transform = "translateY(10px)";
-    setTimeout(() => {
-      el.style.opacity = 1;
-      el.style.transform = "translateY(0)";
-    }, 100);
-  }
+  function renderDay(dateStr) {
+    const [y, m, d]  = dateStr.split('-').map(Number);
+    const monthLabel = monthNames[m - 1];
+    document.getElementById('selected-date').textContent = `${monthLabel} ${d}, ${y}`;
 
-  function renderDay(day) {
-    const container = document.getElementById("daily-events");
-    const dateLabel = document.getElementById("selected-date");
-    const dayEvents = events[day] || [];
+    const container = document.getElementById('daily-events');
+    const dayEvents = events[dateStr] || [];
 
-    // Days 30-31 belong to March; the rest are April.
-    const monthLabel = (day >= 30) ? "March" : "April";
-    dateLabel.innerText = `${monthLabel} ${day}`;
+    container.style.opacity   = 0;
+    container.style.transform = 'translateY(10px)';
+    setTimeout(() => { container.style.opacity = 1; container.style.transform = 'translateY(0)'; }, 100);
 
-    container.innerHTML = "";
-    animateContainer();
-
-    const colorMap = {
-      HW:   "#2f6fff",
-      QUIZ: "#9BFF00",
-      EXAM: "#ff4d57",
-      LAB:  "#ffd24d",
-      PROJ: "#c77dff"
-    };
-
-    dayEvents.forEach(e => {
-      const dotColor = colorMap[e.type] || "#888";
-      container.innerHTML += `
-        <div class="mb-4 position-relative">
-          <div style="
-            position:absolute;
-            left:-28px;
-            top:6px;
-            width:10px;
-            height:10px;
-            border-radius:50%;
-            background:${dotColor};
-            box-shadow:0 0 10px ${dotColor};
-          "></div>
-          <div class="text-light fw-bold">${e.title}</div>
-          <small class="text-muted">${e.time}</small>
-        </div>
-      `;
-    });
-
+    container.innerHTML = '';
     if (dayEvents.length === 0) {
       container.innerHTML = `<div class="text-muted">No assignments due.</div>`;
+    } else {
+      dayEvents.forEach(e => {
+        const dot = COLOR_MAP[e.type] || '#888';
+        container.innerHTML += `
+          <div class="mb-4 position-relative">
+            <div style="position:absolute;left:-28px;top:6px;width:10px;height:10px;border-radius:50%;background:${dot};box-shadow:0 0 10px ${dot};"></div>
+            <div class="text-light fw-bold">${e.title}</div>
+            <small class="text-muted">${e.time || 'No time set'}</small>
+          </div>`;
+      });
     }
 
-    // Day difficulty badge
-    const dayPoints = pointsForEvents(dayEvents);
-    const dayDifficulty = classifyDay(dayPoints);
-    const style = DIFFICULTY_STYLE[dayDifficulty];
-
-    document.getElementById("stress-level").innerHTML = `
-      <span style="
-        background:${style.color};
-        padding:6px 14px;
-        border-radius:20px;
-        font-size:0.85rem;
-        color:white;
-      ">
-        ${dayDifficulty} &middot; ${dayPoints} pts
-      </span>
-    `;
+    const pts  = dayEvents.reduce((s, e) => s + (POINTS_BY_TYPE[e.type] || 0), 0);
+    const diff = classifyDay(pts);
+    const s    = DIFFICULTY_STYLE[diff];
+    document.getElementById('stress-level').innerHTML = `
+      <span style="background:${s.color};padding:6px 14px;border-radius:20px;font-size:0.85rem;color:white;">
+        ${diff} &middot; ${pts} pts
+      </span>`;
   }
 
-  function renderWeekDifficulties() {
-    document.querySelectorAll(".week-difficulty-label").forEach(el => {
-      const weekNum = parseInt(el.dataset.week, 10);
-      const pts = pointsForWeek(weekNum);
-      const difficulty = classifyWeek(pts, totalClasses);
-      const style = DIFFICULTY_STYLE[difficulty];
+  document.getElementById('prevMonth').addEventListener('click', () => {
+    viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    buildCalendar();
+  });
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    buildCalendar();
+  });
 
-      el.classList.remove("text-success", "text-warning", "text-danger");
-      el.classList.add(style.textClass);
-      el.innerText = difficulty;
-    });
-  }
-
-  // ---- INIT ---------------------------------------------------------------
-  renderWeekDifficulties();
-  renderDay(14);  // Default to a Hard day so the red badge shows on load.
+  buildCalendar();
+  renderDay(isoKey(today.getFullYear(), today.getMonth(), today.getDate()));
 </script>

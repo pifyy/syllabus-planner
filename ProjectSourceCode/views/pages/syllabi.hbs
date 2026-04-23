@@ -22,6 +22,14 @@
           </label>
           <input type="file" name="syllabusFile" id="fileInput" accept=".pdf" style="display:none">
           <p class="upload-hint">Supports PDF Only</p>
+          <div class="upload-provider-row">
+            <label class="modal-label" for="aiProviderSelect">AI Processor</label>
+            <select class="modal-input modal-select" id="aiProviderSelect">
+              <option value="1" selected>Qwen 3.5</option>
+              <option value="0">Gemini 3</option>
+              <option value="0">Claude Mythos</option> <!-- :) -->
+            </select>
+          </div>
         </form>
       </div>
 
