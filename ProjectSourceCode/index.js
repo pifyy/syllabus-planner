@@ -9,7 +9,6 @@ const bodyParser = require('body-parser');
 const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
 const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
-const { error } = require('console');
 
 const multer = require('multer'); // to properly handle file uploads in our server. 
 const upload = multer({ storage: multer.memoryStorage() }) //specifies that we want the uploaded files to be stored in memory for processing
@@ -480,9 +479,8 @@ app.post('/syllabi/upload', auth, upload.single('syllabusFile'), async (req, res
     //for test case only to ensure uploaded correctly.
     return res.status(200).json({ status: 'success', message: 'File uploaded successfully' });
   }
-  //return res.status(200).json({ status: 'success', message: 'File uploaded successfully' });
   // Now we may process file.
-  // ai_provider: 0 = Google Gemini, 1 = Qwen (default)
+  // ai_provider: 0 = Google Gemini, 1 = Qwen 3.5 Plus (default), 3 = Qwen 3.6 Max
   const prompt = `Analize the given syllabus and extract the following information in the json format specified:
   {
   "professor": "Professor Name",
@@ -594,7 +592,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
     parcedResponse = Array.isArray(data) ? data[0] : data;
     console.log('Parsed response from Gemini API:', parcedResponse);
   } else {
-    // qwen3.5-flash is a text model, so we extract the PDF text and include it inline. This also makes it much faster than just using gemini
+    // qwen is a text model, so we extract the PDF text and include it inline. This also makes it much faster than just using gemini
     let pdfText;
     try {
       const parsed = await pdfParse(req.file.buffer);
@@ -608,11 +606,12 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
     const truncatedText = pdfText.slice(0, 15000);
 
     let qwenResponse;
+    const model = aiProvider === 3 ? 'qwen3.6-max-preview' : 'qwen3.5-flash';
     try {
       qwenResponse = await axios.post(
         QWEN_API_URL,
         {
-          model: 'qwen3.5-flash',
+          model: model,
           messages: [
             { role: 'user', content: `${prompt}\n\nSyllabus content:\n${truncatedText}` },
           ],
@@ -674,12 +673,12 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
           createdClassIDs.push(newClassID.classid);
           console.log('Enrolled in class with ID:', newClassID);
           //adding meeting times for section
+          let dates;
           for (const meetTime of section.meeting_times) {
             const dayStr = meetTime.day;
             const dayInts = parseDayString(dayStr);
             const startTime = meetTime['start-time'] || '00:00:00';
             const endTime = meetTime['end-time'] || '00:00:00';
-            let dates; 
             if (meetTime.dates){
               dates = parseDateRange(meetTime.dates);
             }
@@ -708,48 +707,48 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
                 await db.none(query, [newClassID.classid, dayInt, "LEC", startTime, endTime, dates.startDate, dates.endDate, location, remote]);
                 console.log(`Added meet time for class ${newClassID.classid} on day ${dayInt}`);
               }
-              catch (err) {                
+              catch (err) {
                 console.error('Error adding meet time:', err);
                 return res.status(500).json({ error: 'An error occurred while adding meet times. Please try again later.' });
                }
             }
-            //adding assignments for section
-            for (const assignment of section.assignments) {
-              const assignmentName = assignment.assignment;
-              const type = assignment.type;
-              const repeat = assignment.repeat == true || String(assignment.repeat).toLowerCase() == 'true';
-              const time = parseTime(assignment.time);
-              if (repeat) {
-                const dueDayStr = assignment.due_date;
-                if (!dueDayStr) {
-                  console.warn('Repeating assignment missing due_date, skipping:', assignmentName);
-                  continue;
-                }
-                const dueDayInts = parseDayString(dueDayStr);
-                for (const dayInt of dueDayInts) {
-                  const occurances = getOccurrencesOfDay(dayInt, dates.startDate, dates.endDate);
-                  for(const occurence of occurances) {
-                      const dueDate = occurence;
-                      try {
-                        await db.none('INSERT INTO assignments(classID, name, type, repeat, dueDate, dueTime) VALUES($1, $2, $3, $4, $5, $6)', [newClassID.classid, assignmentName, type, repeat, dueDate, time]);
-                        console.log(`Added repeating assignment ${assignmentName} for class ${newClassID.classid} on day ${dueDate}`); 
-                      }
-                      catch (err) {
-                        console.error('Error adding repeating assignment:', err);
-                        return res.status(500).json({ error: 'An error occurred while adding assignments. Please try again later.' });
-                      }
+          }
+          //adding assignments for section
+          for (const assignment of section.assignments) {
+            const assignmentName = assignment.assignment;
+            const type = assignment.type;
+            const repeat = assignment.repeat == true || String(assignment.repeat).toLowerCase() == 'true';
+            const time = parseTime(assignment.time);
+            if (repeat) {
+              const dueDayStr = assignment.due_date;
+              if (!dueDayStr) {
+                console.warn('Repeating assignment missing due_date, skipping:', assignmentName);
+                continue;
+              }
+              const dueDayInts = parseDayString(dueDayStr);
+              for (const dayInt of dueDayInts) {
+                const occurances = getOccurrencesOfDay(dayInt, dates.startDate, dates.endDate);
+                for(const occurence of occurances) {
+                    const dueDate = occurence;
+                    try {
+                      await db.none('INSERT INTO assignments(classID, name, type, repeat, dueDate, dueTime) VALUES($1, $2, $3, $4, $5, $6)', [newClassID.classid, assignmentName, type, repeat, dueDate, time]);
+                      console.log(`Added repeating assignment ${assignmentName} for class ${newClassID.classid} on day ${dueDate}`);
+                    }
+                    catch (err) {
+                      console.error('Error adding repeating assignment:', err);
+                      return res.status(500).json({ error: 'An error occurred while adding assignments. Please try again later.' });
                     }
                   }
-              } else {
-                const dueDate = assignment.due_date;
-                try {
-                  await db.none('INSERT INTO assignments(classID, name, type, repeat, dueDate, dueTime) VALUES($1, $2, $3, $4, $5, $6)', [newClassID.classid, assignmentName, type, repeat, dueDate, time]);
-                  console.log(`Added one-time assignment ${assignmentName} for class ${newClassID.classid} due on ${dueDate}`);
                 }
-                catch (err) {
-                  console.error('Error adding one-time assignment:', err);
-                  return res.status(500).json({ error: 'An error occurred while adding assignments. Please try again later.' });
-                }
+            } else {
+              const dueDate = assignment.due_date;
+              try {
+                await db.none('INSERT INTO assignments(classID, name, type, repeat, dueDate, dueTime) VALUES($1, $2, $3, $4, $5, $6)', [newClassID.classid, assignmentName, type, repeat, dueDate, time]);
+                console.log(`Added one-time assignment ${assignmentName} for class ${newClassID.classid} due on ${dueDate}`);
+              }
+              catch (err) {
+                console.error('Error adding one-time assignment:', err);
+                return res.status(500).json({ error: 'An error occurred while adding assignments. Please try again later.' });
               }
             }
           }
