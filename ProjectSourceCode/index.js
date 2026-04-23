@@ -476,8 +476,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
     parcedResponse = Array.isArray(data) ? data[0] : data;
     console.log('Parsed response from Gemini API:', parcedResponse);
   } else {
-    // --- Qwen via Alibaba Cloud DashScope (OpenAI-compatible) ---
-    // qwen3.5-flash is a text model, so we extract the PDF text and include it inline.
+    // qwen3.5-flash is a text model, so we extract the PDF text and include it inline. This also makes it much faster than just using gemini
     let pdfText;
     try {
       const parsed = await pdfParse(req.file.buffer);
@@ -487,7 +486,7 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
       return res.status(500).json({ error: 'An error occurred while reading the syllabus PDF. Please try again later.' });
     }
 
-    // Truncate to avoid oversized requests
+    // Truncate to avoid oversized requests. RIP if your syllabus is over 15k
     const truncatedText = pdfText.slice(0, 15000);
 
     let qwenResponse;
@@ -520,7 +519,6 @@ When analyzing the syllabus, make sure to use SQL date format (yyyy/mm/dd) for a
     parcedResponse = Array.isArray(data) ? data[0] : data;
     console.log('Parsed response from Qwen API:', parcedResponse);
   }
-  // For now we just return the parsed response, but down the line we will want to insert this info into our database and link it to the user that uploaded it.
   const professor = parcedResponse.professor;
   const className = parcedResponse.class_name;
   const classCode = parcedResponse.class_code;

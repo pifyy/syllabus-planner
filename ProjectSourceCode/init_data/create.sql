@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS meet_times (
     endTime TIME,
     startDate DATE,
     endDate DATE,
-    location VARCHAR(40) NOT NULL,-- For CU specifically ECCS 121 for example
+    location VARCHAR(40),-- For CU specifically ECCS 121 for example
     remote BOOLEAN -- for online classes
 );
 
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS students_to_classes (
 CREATE TABLE IF NOT EXISTS assignments (
     assignmentID SERIAL PRIMARY KEY,
     classID INT NOT NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(1000) NOT NULL,
     type VARCHAR(10) NOT NULL,
     repeat BOOLEAN NOT NULL DEFAULT FALSE,
     dueDate DATE,
