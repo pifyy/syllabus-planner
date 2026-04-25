@@ -11,7 +11,10 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=syllabus_planner
 SESSION_SECRET=secret123), 
+GEMINI_API_KEY="xxxxxxxx"
+QWEN_API_KEY="xxxxxxxx"
 internet access for API feature.
+API keys can be generated through https://www.alibabacloud.com/ and https://ai.google.dev/gemini-api/
 
 Instructions on how to run the application locally: clone the repo, then from within navigate to project source folder: cd ProjectSourceCode, make sure to include a configured .env file, start the application with Docker Compose: docker compose up -d, open the app in a browser at http://localhost:3000
 
